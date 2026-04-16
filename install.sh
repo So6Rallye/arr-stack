@@ -18,6 +18,13 @@ sudo chown -R $(id -u):$(id -g) /docker/appdata /data
 
 echo "If your HDDs are not empty and need formatting, read hardware-raid-guide.md first."
 
+echo "Checking /data mount..."
+if ! mountpoint -q /data; then
+  echo "ERROR: /data is not mounted. Mount your data volume before running the stack."
+  echo "See hardware-raid-guide.md for RAID setup."
+  exit 1
+fi
+
 echo "Starting stack..."
 sudo docker compose up -d
 

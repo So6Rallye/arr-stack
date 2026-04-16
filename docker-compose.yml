@@ -6,6 +6,9 @@ x-common-keys: &common-keys
   restart: unless-stopped
   logging:
     driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
   environment:
     PUID: ${PUID:-1000}
     PGID: ${PGID:-1000}

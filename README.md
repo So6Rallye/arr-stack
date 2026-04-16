@@ -626,8 +626,4 @@ The guiding principle is to keep things simple:
 
 ## Possible future improvements
 
-- Tailscale for remote access
-- backup scripts for `/docker/appdata`
-- SMART monitoring for HDDs
-- RAID rebuild and disk replacement documentation
-- optional `.env` support for cleaner customization
+- Tailscale for remote access (see [tailscale-guide.md](./tailscale-guide.md))

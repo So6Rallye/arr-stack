@@ -1,5 +1,7 @@
 .env
-*.log
-backup/
-*.tmp
-*.swp
+*.env.*
+node_modules/
+SESSION_SUMMARY.md
+dist/
+.DS_Store
+credentials.md

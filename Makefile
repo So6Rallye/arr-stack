@@ -1,3 +1,5 @@
+.PHONY: up down restart logs ps pull update backup
+
 up:
 	sudo docker compose up -d
 
