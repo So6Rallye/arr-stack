@@ -3,16 +3,16 @@
 ###############################################
 
 x-common-keys: &common-keys
-    restart: unless-stopped
-    logging:
-      driver: json-file
-    environment:
-      PUID: 1000
-      PGID: 1000
-      TZ: Europe/London
-    dns:
-      - 1.1.1.1
-      - 1.0.0.1
+  restart: unless-stopped
+  logging:
+    driver: json-file
+  environment:
+    PUID: 1000
+    PGID: 1000
+    TZ: Europe/Paris
+  dns:
+    - 1.1.1.1
+    - 1.0.0.1
 
 services:
 ###############################################
@@ -32,7 +32,6 @@ services:
 ###############################################
 # SONARR - TV Shows
 ###############################################
-
   sonarr:
     <<: *common-keys
     container_name: sonarr
@@ -47,7 +46,6 @@ services:
 ###############################################
 # LIDARR - Music
 ###############################################
-
   lidarr:
     <<: *common-keys
     container_name: lidarr
@@ -62,7 +60,6 @@ services:
 ###############################################
 # BAZARR - Subtitles
 ###############################################
-
   bazarr:
     <<: *common-keys
     container_name: bazarr
@@ -77,7 +74,6 @@ services:
 ###############################################
 # PROWLARR - Indexer Manager
 ###############################################
-
   prowlarr:
     <<: *common-keys
     container_name: prowlarr
@@ -91,7 +87,6 @@ services:
 ###############################################
 # QBITTORRENT - Downloader
 ###############################################
-
   qbittorrent:
     <<: *common-keys
     container_name: qbittorrent
@@ -101,8 +96,11 @@ services:
       - 6881:6881
       - 6881:6881/udp
     environment:
-      - WEBUI_PORT=8080
-      - TORRENTING_PORT=6881
+      PUID: 1000
+      PGID: 1000
+      TZ: Europe/Paris
+      WEBUI_PORT: 8080
+      TORRENTING_PORT: 6881
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /docker/appdata/qbittorrent:/config
@@ -111,25 +109,40 @@ services:
 ###############################################
 # JELLYFIN - Media Server
 ###############################################
-
   jellyfin:
     <<: *common-keys
     container_name: jellyfin
     image: ghcr.io/hotio/jellyfin:latest
+    ports:
+      - 8096:8096
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /docker/appdata/jellyfin:/config
-      - /data/media:/data/media:ro #read-only
+      - /data/media:/data/media:ro
+    devices:
+      - /dev/dri:/dev/dri
+
+###############################################
+# SYNCTHING - Personal files / phone sync
+###############################################
+  syncthing:
+    <<: *common-keys
+    container_name: syncthing
+    image: syncthing/syncthing:latest
+    hostname: lenovo-syncthing
     ports:
-      - 8096:8096
+      - 8384:8384
+      - 22000:22000/tcp
+      - 22000:22000/udp
+      - 21027:21027/udp
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /docker/appdata/syncthing:/var/syncthing
+      - /data/personal:/data/personal
 
 ###############################################
 # ARR Stack Dedicated Network
 ###############################################
-
 networks:
   default:
     name: arr_network
-
-###############################################
-###############################################
