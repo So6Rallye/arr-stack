@@ -1,14 +1,24 @@
 #!/usr/bin/env bash
 set -e
 
-echo "== ARR Stack helper install =="
+echo "== ARR Stack install helper V2 =="
 
-echo "Creating folders..."
+echo "Detected user: $(id -un)"
+echo "UID: $(id -u)"
+echo "GID: $(id -g)"
+
+echo "Creating appdata folders..."
 sudo mkdir -p /docker/appdata/{radarr,sonarr,lidarr,bazarr,prowlarr,qbittorrent,jellyfin,syncthing}
+
+echo "Creating data folders..."
 sudo mkdir -p /data/{torrents/{tv,movies,music},media/{tv,movies,music},personal/{photos,phone-camera,videos,documents,shared}}
 
 echo "Setting ownership..."
-sudo chown -R 1000:1000 /docker/appdata /data
+sudo chown -R $(id -u):$(id -g) /docker/appdata /data
 
-echo "Done. Review docker-compose.yml then run:"
-echo "sudo docker compose up -d"
+echo "If your HDDs are not empty and need formatting, read hardware-raid-guide.md first."
+
+echo "Starting stack..."
+sudo docker compose up -d
+
+echo "Done. Check status with: make ps"
