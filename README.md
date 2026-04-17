@@ -19,7 +19,7 @@ This version is tailored for a personal home server focused on:
 - phone and PC file sync with Syncthing
 - SMB/Samba shares on the host
 - France timezone
-- Intel QuickSync support for Jellyfin
+- direct-play streaming to Freebox Player Ultra (H.265 hardware decode) — no GPU transcode required
 
 ---
 
@@ -32,12 +32,14 @@ This stack is designed to be:
 - accessible
 - easy to evolve later
 
-Typical hardware target:
+Typical deployment target:
 
-- an old Lenovo or similar Intel-based desktop
-- SSD for the OS and Docker appdata
-- separate storage for media and personal files
-- ideally RAID1 or another redundancy strategy on the data volume
+- Debian 12 VM on a Proxmox VE host (`rp-pve-01`, Ryzen 3700x, 62 GiB ECC)
+- VM resources: 4 vCPU / 8 GB RAM / single 500 GB virtio disk
+- RAID / storage redundancy **handled by the Proxmox host** (ZFS or LVM-thin depending on host config) — no RAID inside the VM
+- `/data` and `/docker/appdata` are simple directories on the single virtio disk (keeps the hardlink invariant)
+
+See [docs/proxmox-vm-guide.md](./docs/proxmox-vm-guide.md) for VM provisioning details.
 
 ---
 
@@ -190,19 +192,15 @@ That is what allows hardlinks to work correctly between downloads and final libr
 
 ---
 
-## Existing HDDs and formatting warning
+## VM provisioning and storage
 
-If your HDDs are **not empty**, do not jump directly to folder creation and stack deployment.
+This stack runs inside a Debian 12 VM on Proxmox. Before starting Docker:
 
-Before using them:
-
-- identify the correct disks
-- inspect existing partitions
-- decide whether data must be preserved or erased
-- format only after confirming disk identity
-- prepare RAID or the target data volume first
-
-Refer to [Hardware and RAID Guide](./hardware-raid-guide.md) before formatting or rebuilding storage.
+- provision the VM with a single virtio disk (500 GB recommended) — see [docs/proxmox-vm-guide.md](./docs/proxmox-vm-guide.md)
+- leave RAID / redundancy to the Proxmox host (ZFS or LVM-thin)
+- keep `/data/torrents` and `/data/media` on the **same filesystem** (naturally satisfied on a single virtio disk)
+- for resizing, migrating or adding a second virtio disk for `/data`, see [docs/proxmox-storage-guide.md](./docs/proxmox-storage-guide.md)
+- VM-level snapshots and backups are handled by Proxmox — see [docs/proxmox-backup-guide.md](./docs/proxmox-backup-guide.md)
 
 ---
 
@@ -416,22 +414,20 @@ Recommended libraries:
 - TV Shows → `/data/media/tv`
 - Music → `/data/media/music`
 
-### Intel hardware acceleration
+### Transcode strategy
 
-The compose file includes:
+Phase 1 — **direct-play only, no hardware transcode**:
 
-```yaml
-devices:
-  - /dev/dri:/dev/dri
-```
+- primary client = Freebox Player Ultra, which decodes H.264/H.265/AAC natively in hardware
+- Jellyfin serves the media as-is (DLNA server enabled, or native Jellyfin app on Android TV / Apple TV / desktop)
+- the library can stay in H.265 (≈50% storage saving vs H.264) without penalty
+- no mapping of `/dev/dri` — the Ryzen 3700x host has no iGPU, and the GTX 1060 stays on the Proxmox host for physical console output
 
-This enables Intel QuickSync (QSV) hardware transcoding. Before enabling it in Jellyfin's dashboard, verify the device exists on the host:
+**Enable DLNA in Jellyfin** (`Dashboard → Networking → DLNA`) so the Freebox Player picks up the server automatically.
 
-```bash
-ls /dev/dri
-```
+### GPU passthrough (future option, not activated)
 
-**If `/dev/dri` is absent** (iGPU disabled in BIOS or non-Intel hardware): Jellyfin starts normally and falls back to software transcoding (higher CPU load). If the container fails to start, remove the `devices:` block from `docker-compose.yml`.
+If a real transcode need emerges (a client incompatible with direct-play is identified), the GTX 1060 can be passed through to the VM for NVENC. Full procedure + rollback in [docs/gpu-passthrough-guide.md](./docs/gpu-passthrough-guide.md). Warning: activating passthrough deprives the Proxmox host of its only video output — only do it when the tradeoff is justified.
 
 ---
 
@@ -603,15 +599,21 @@ The guiding principle is to keep things simple:
 
 ## Additional guides
 
-- [Hardware and RAID Guide](./hardware-raid-guide.md)
+Proxmox / VM infrastructure:
+
+- [Proxmox VM Guide](./docs/proxmox-vm-guide.md)
+- [Proxmox Storage Guide](./docs/proxmox-storage-guide.md)
+- [Proxmox Backup Guide](./docs/proxmox-backup-guide.md)
+- [GPU Passthrough Guide (future option)](./docs/gpu-passthrough-guide.md)
+
+Application-level:
+
 - [Backup Guide](./backup-guide.md)
-- [Upgrade Disks Guide](./upgrade-disks-guide.md)
 - [First Boot Checklist](./first-boot-checklist.md)
 - [Diagnostics Guide](./diagnostics.md)
 - [Restore Guide](./restore-guide.md)
 - [Network Guide](./network-guide.md)
 - [Tailscale Guide](./tailscale-guide.md)
-- [SMART Monitor Guide](./smart-monitor-guide.md)
 - [Maintenance Schedule](./maintenance-schedule.md)
 - [Architecture Diagram](./architecture-diagram.md)
 - [Watchtower Example](./watchtower-example.md)
@@ -623,7 +625,7 @@ The guiding principle is to keep things simple:
 - `TZ` is set to `Europe/Paris`
 - qBittorrent explicitly keeps `PUID`, `PGID` and `TZ`
 - Syncthing is included for personal files and phone sync
-- Jellyfin maps `/dev/dri` for Intel QuickSync
+- Jellyfin uses direct-play by default (no GPU transcode). See the [GPU Passthrough Guide](./docs/gpu-passthrough-guide.md) for the future NVIDIA NVENC option.
 - `/data/personal` is included in the folder structure
 - fixed LAN IP recommended for this project: `192.168.1.200`
 - recommended hostname: `arr-server`

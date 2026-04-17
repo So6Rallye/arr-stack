@@ -1,6 +1,7 @@
 # CONFIG-SERVICES.md — Configuration post-déploiement
 
 Configuration manuelle des services après `make up`.
+Cible : VM Debian 12 `arr-server` sur Proxmox VE (`rp-pve-01`, Ryzen 3700x, 62 GiB ECC).
 Toutes les URLs utilisent l'IP fixe `192.168.1.200`.
 Communication inter-conteneurs via **noms Docker** (pas les IPs).
 
@@ -239,12 +240,31 @@ Assistant de configuration au premier boot : créer un utilisateur admin + passw
 | Shows | `/data/media/tv` |
 | Music | `/data/media/music` |
 
-### Hardware acceleration (Intel QuickSync)
-`Dashboard → Playback → Transcoding` :
-- Hardware acceleration : **Intel QuickSync Video (QSV)**
-- Vérifier que `/dev/dri` est présent sur le host : `ls /dev/dri`
-- Le device est déjà passé dans le docker-compose (`devices: /dev/dri:/dev/dri`)
-- **Si `/dev/dri` est absent** (iGPU désactivé dans le BIOS ou machine sans iGPU Intel) : Jellyfin démarre quand même mais bascule en **software transcoding** (plus lent, charge CPU). Retirer le bloc `devices:` du docker-compose si l'erreur persiste au démarrage.
+### Stratégie transcode — direct-play prioritaire
+
+En Phase 1, **aucun transcode hardware n'est activé**. Le client principal est la **Freebox Player Ultra**, qui décode H.264/H.265/AAC nativement en hardware. L'accès à la bibliothèque se fait soit via DLNA (serveur intégré Jellyfin), soit via l'app Jellyfin Android TV. La lecture est donc **direct-play end-to-end**, sans passer par la CPU/GPU de la VM.
+
+### Activer le serveur DLNA pour le Freebox Player
+
+`Dashboard → Playback → DLNA` (ou `Dashboard → Networking → DLNA` selon la version) :
+- **Enable DLNA server** : ✅
+- **Enable DLNA Play To** : ✅ (optionnel — permet au Freebox Player de déclencher la lecture depuis Jellyfin)
+- Aucun port supplémentaire à ouvrir — Jellyfin expose le DLNA sur le port 1900/UDP (SSDP) et 8096/TCP.
+
+Après activation, la Freebox détecte automatiquement le serveur Jellyfin dans `Freebox Player → Multimédia → Serveurs UPnP/DLNA`.
+
+### Clients validés en direct-play
+
+- **Freebox Player Ultra** (DLNA ou app Jellyfin Android TV) — H.265 HW decode natif
+- **Jellyfin Android TV** (Nvidia Shield, Chromecast with Google TV, box Android TV)
+- **Jellyfin Media Player** (desktop Windows/macOS/Linux)
+- **Infuse** (Apple TV, iOS, macOS) — H.265 HW decode natif
+
+### Transcodage hardware — option future (non activée)
+
+`Dashboard → Playback → Transcoding` reste sur **None** par défaut. Activer le transcode hardware **uniquement** si un client incompatible direct-play est identifié (rare avec les clients ci-dessus).
+
+La procédure complète pour activer le passthrough GPU NVIDIA (GTX 1060 / NVENC) est documentée dans [docs/gpu-passthrough-guide.md](./docs/gpu-passthrough-guide.md). ⚠️ Cette opération **prive l'hôte Proxmox de sa seule sortie vidéo** — ne pas exécuter sans nécessité avérée.
 
 ---
 
