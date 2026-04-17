@@ -27,13 +27,20 @@ sudo mkdir -p "$BACKUP_DEST"
 echo "Setting ownership..."
 sudo chown -R "$(id -u):$(id -g)" /docker/appdata /data
 
-echo "If your HDDs are not empty and need formatting, read hardware-raid-guide.md first."
-
-echo "Checking /data mount..."
-if ! mountpoint -q /data; then
-  echo "ERROR: /data is not mounted. Mount your data volume before running the stack."
-  echo "See hardware-raid-guide.md for RAID setup."
+echo "Checking /data directory..."
+if [ ! -d /data ]; then
+  echo "ERROR: /data does not exist. Create it (or mount a dedicated volume) before running the stack."
+  echo "See docs/proxmox-storage-guide.md for dedicated /data disk setup."
   exit 1
+fi
+
+# Warn if /data is on a different filesystem from /data/torrents (rare on single-disk VM,
+# but possible if a second virtio disk was mounted under /data/media or /data/torrents only).
+if [ -d /data/torrents ] && [ -d /data/media ]; then
+  if [ "$(stat -c '%m' /data/torrents)" != "$(stat -c '%m' /data/media)" ]; then
+    echo "WARNING: /data/torrents and /data/media are on different filesystems — hardlinks will degrade to copies."
+    echo "See docs/proxmox-storage-guide.md."
+  fi
 fi
 
 echo "Starting stack..."
