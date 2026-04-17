@@ -60,9 +60,9 @@ Examples:
 - `docker-compose.yml`
 - `README.md`
 - `guide.md`
-- `hardware-raid-guide.md`
-- future scripts such as `install.sh`
-- future `.env` files
+- `docs/proxmox-vm-guide.md`, `docs/proxmox-storage-guide.md`, `docs/proxmox-backup-guide.md`
+- `install.sh`, `backup-arr-stack.sh`
+- `.env` (hors git) + `.env.example`
 - `/etc/samba/smb.conf`
 
 ---
