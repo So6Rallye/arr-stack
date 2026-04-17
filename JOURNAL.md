@@ -28,3 +28,10 @@ Mis à jour à chaque session de travail.
 | 2026-04-17 | Ajout make check-hardlinks — vérifie les inodes media/ vs torrents/ après premier contenu traité. |
 | 2026-04-17 | Jellyfin /dev/dri — documenté comme optionnel dans CONFIG-SERVICES.md et README.md : fallback software transcoding si iGPU absent ou désactivé. |
 | 2026-04-17 | Stratégie backup confirmée : /data/media non sauvegardé (re-téléchargeable), seuls /docker/appdata + /data/personal + configs système sauvegardés. |
+| 2026-04-17 | Migration cible déploiement : Lenovo i5-6400 physique → VM Debian 12 sur Proxmox rp-pve-01 (Ryzen 3700x, 62 GiB ECC). Motif : Proxmox déjà en prod, plus puissant, ECC, RAID géré par l'hôte. Lenovo abandonné. |
+| 2026-04-17 | Ressources VM arrêtées : 4 vCPU / 8 GB RAM / 500 GB virtio disk. |
+| 2026-04-17 | Gestion RAID supprimée côté VM — Proxmox host s'en charge. Suppression complète Phase 3 Chemins A/B, mdadm, mdadm.conf. Hardlinks toujours OK (même disque virtuel). |
+| 2026-04-17 | Optimisations Intel retirées (iGPU HD 530, QuickSync, /dev/dri — inapplicables sur Ryzen 3700x). |
+| 2026-04-17 | Stratégie transcode Jellyfin Phase 1 : **direct-play pur via DLNA Jellyfin → Freebox Player (Freebox Ultra)** qui décode H.265 nativement. Pas de passthrough GPU. GTX 1060 laissée sur l'hôte Proxmox pour console physique (Ryzen sans iGPU). Passthrough documenté comme option future réversible. Bibliothèque peut rester en H.265. |
+| 2026-04-17 | Samba conservé dans la VM (pas d'externalisation). |
+| 2026-04-17 | Guides docs/hardware-raid-guide.md et docs/upgrade-disks-guide.md supprimés, remplacés par proxmox-vm-guide.md + proxmox-storage-guide.md + proxmox-backup-guide.md + gpu-passthrough-guide.md (ce dernier documenté comme option future non activée). |
