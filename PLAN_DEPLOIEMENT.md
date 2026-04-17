@@ -1,6 +1,6 @@
 # PLAN_DEPLOIEMENT.md — ARR Stack
 
-Déploiement sur machine physique locale (Lenovo i5-6400, Debian 12 Bookworm).
+Déploiement comme **VM Debian 12 (Bookworm) sur Proxmox VE** (`rp-pve-01`, Ryzen 3700x, 62 GiB ECC).
 Exécuter les phases dans l'ordre. Aucune action destructive sans audit préalable.
 
 ---
@@ -9,77 +9,74 @@ Exécuter les phases dans l'ordre. Aucune action destructive sans audit préalab
 - [x] Lecture complète du dépôt (README, guides, docker-compose, .env.example, scripts)
 - [x] Identification des manques et ambiguïtés
 - [x] Mise à jour CLAUDE.md, credentials.md, FONCTIONNALITES.md, JOURNAL.md, PLAN_DEPLOIEMENT.md, TODO_SESSION.md
-- [x] Choix OS : Debian 12 (Bookworm)
-- [x] Confirmation HDDs à formater (pas de données à conserver)
+- [x] Choix OS guest : Debian 12 (Bookworm)
+- [x] Migration cible : Lenovo physique → VM Proxmox (voir `INFOS-DEV/migration-proxmox.md`)
 
 ---
 
-## Phase 0.5 — État hardware confirmé ✅
-- [x] Machine en cours de montage physique (Lenovo desktop i5-6400)
-- [x] 2× HDDs 2TB WD Caviar Black (2010) — confirmés à formater, pas de données à conserver
-- [ ] HDDs reconnus par le BIOS au premier boot
+## Phase 0.5 — État hôte Proxmox ✅
+- [x] Proxmox VE 8.0.9 en production sur `rp-pve-01`
+- [x] Ressources disponibles vérifiées : Ryzen 3700x (8c/16t), 62 GiB ECC, 1.52 TiB storage
+- [x] GTX 1060 6GB branchée sur l'hôte — **reste sur l'hôte** (sortie console physique, Ryzen sans iGPU)
+- [x] Variante hors-Proxmox figée : tag `v0-physical-lenovo` + branche `legacy/physical-lenovo`
 
 ---
 
-## ► PHASE UTILISATEUR — Installation Debian 12 (actions manuelles)
-> L'utilisateur fait cette phase seul. L'agent prend le relais dès que SSH est accessible.
+## Phase 0.7 — Provisioning VM Proxmox (AGENT + utilisateur)
+> Remplace l'install Debian physique. La VM remplace le Lenovo.
 
-### Préparation ISO
-- [ ] Télécharger l'ISO Debian 12 netinst amd64 sur debian.org
-- [ ] Créer une clé USB bootable (Rufus sous Windows — Image mode, pas ISO mode)
-- [ ] Brancher la clé USB + câble réseau filaire sur le Lenovo
+### Préparation
+- [ ] **Utilisateur → Proxmox UI** : Datacenter → Storage → upload ISO Debian 12 netinst amd64
+- [ ] Choisir un VMID libre (ex: `200`) et un node (`rp-pve-01`)
 
-### Installation Debian 12
-- [ ] Booter sur la clé USB (F12 ou F2 au démarrage pour le boot menu)
-- [ ] Choisir **"Install"** (pas graphical install — plus simple)
-- [ ] Langue : English (évite les problèmes d'encodage serveur)
+### Création VM (CLI `qm create` ou UI Proxmox)
+- [ ] VM name : `arr-server`
+- [ ] OS : Debian 12 / Linux 6.x
+- [ ] CPU : 4 vCPU, type `host` (exposition instructions natives)
+- [ ] RAM : 8 GB (pas de ballooning agressif)
+- [ ] Disque : virtio-scsi, 500 GB, storage selon config hôte (ZFS ou LVM-thin)
+- [ ] Réseau : bridge `vmbr0`, modèle `virtio`, **noter la MAC générée** (pour bail DHCP Freebox)
+- [ ] Pas de passthrough GPU en Phase 1 — GTX 1060 reste sur l'hôte
+- [ ] Options VM : Start at boot = yes, qemu-guest-agent = enabled
+
+### Install Debian dans la VM (via console Proxmox noVNC/SPICE)
+- [ ] Booter sur l'ISO, choisir **Install** (pas graphical)
+- [ ] Langue : English (évite soucis encodage serveur)
 - [ ] Localisation : France / Europe/Paris
-- [ ] Clavier : French (AZERTY) ou selon préférence
-- [ ] Hostname : **arr-server**
-- [ ] Domain name : laisser vide
-- [ ] Root password : choisir un mot de passe fort — noter dans credentials.md
-- [ ] Créer un utilisateur normal (ex: `romain`) — noter dans credentials.md
-- [ ] Partitionnement : **manuel**
-  - Identifier le SSD → tout l'espace pour `/` (ext4)
-  - Laisser les 2 HDDs **non partitionnés** — l'agent s'en occupera (RAID1)
-- [ ] Miroir : choisir un miroir France (deb.debian.org)
-- [ ] Logiciels à installer : cocher **SSH server** + **standard system utilities** uniquement
-  - Décocher tout le reste (pas de desktop, pas d'interface graphique)
+- [ ] Hostname : `arr-server` — Domain : vide
+- [ ] Root password + user normal (ex: `romain`) — noter dans credentials.md
+- [ ] Partitionnement : guidé, tout l'espace virtio → `/` (ext4). Pas de RAID, pas de LVM.
+- [ ] Miroir : France (deb.debian.org)
+- [ ] Logiciels : cocher **SSH server** + **standard system utilities** uniquement
 
-### Après le premier boot
-- [ ] Récupérer l'IP actuelle de la machine : `ip a` (ou voir dans le routeur)
-- [ ] Vérifier que SSH répond : `ssh utilisateur@<ip-actuelle>`
-- [ ] Communiquer à l'agent : **IP actuelle + nom d'utilisateur**
+### Post-install
+- [ ] `sudo apt install -y qemu-guest-agent && sudo systemctl enable --now qemu-guest-agent`
+- [ ] Vérifier IP obtenue via console ou UI Proxmox → communiquer à l'agent + user SSH
 
 ---
 
 ## ════════════════════════════════════════════════
 ## ► TRANSFERT — L'AGENT PREND LA MAIN ICI
 ## ════════════════════════════════════════════════
-> Dès que SSH est accessible, toutes les phases suivantes sont exécutées par l'agent.
-> L'utilisateur n'a plus besoin d'intervenir sauf pour les actions sur le routeur (réservation DHCP).
+> Dès que SSH sur la VM est accessible, toutes les phases suivantes sont exécutées par l'agent.
+> L'utilisateur n'a plus besoin d'intervenir sauf pour l'action routeur (réservation DHCP Freebox).
 
 ---
 
-## Phase 1 — Audit machine réelle (AGENT via SSH)
-> OS cible : **Debian 12 (Bookworm)** — décision prise.
+## Phase 1 — Audit VM (AGENT via SSH)
 
-- [ ] `hostnamectl` — vérifier OS, version, hostname
-- [ ] `lscpu` + `free -h` — CPU, RAM
-- [ ] `lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,MODEL` — inventaire complet disques
-- [ ] `sudo fdisk -l` — tables de partition
-- [ ] `df -h` + `cat /etc/fstab` — montages actuels
-- [ ] `blkid` — UUID des partitions
-- [ ] `sudo apt install -y smartmontools` — installer smartctl si absent
-- [ ] `sudo smartctl -a /dev/sda` + `/dev/sdb` + `/dev/sdc` — SMART sur tous les disques
-- [ ] `ls /dev/dri` — vérifier QuickSync Intel disponible
-- [ ] `ip a` + `ip link` — interfaces réseau + noter adresse MAC
-- [ ] Résumé : identifier SSD / HDD1 / HDD2 sans ambiguïté, santé SMART, plan toujours valide
+- [ ] `hostnamectl` — confirmer **on est bien dans la VM `arr-server`** (pas sur l'hôte Proxmox)
+- [ ] `lscpu` + `free -h` — 4 vCPU / 8 GB OK ?
+- [ ] `lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT` — disque virtio unique visible ?
+- [ ] `df -h` + `findmnt /` — points de montage
+- [ ] `systemctl status qemu-guest-agent` — actif ?
+- [ ] `ip a` + `ip link` — interface réseau + **MAC virtuelle** (pour Phase 2)
+- [ ] Pas de `smartctl`, pas de `ls /dev/dri` — inapplicables sur VM sans passthrough
 
 ---
 
 ## Phase 2 — Réseau (AGENT + action routeur utilisateur)
-- [ ] L'agent communique la MAC adresse (depuis `ip link show <interface>`)
+- [ ] L'agent communique la MAC virtuelle (depuis `ip link` ou config VM Proxmox)
 - [ ] **Utilisateur → Freebox** :
   - Paramètres Freebox → Réseau local → DHCP → onglet **Baux Statiques**
   - Cliquer **"+ Ajouter un bail DHCP Statique"**
@@ -87,36 +84,28 @@ Exécuter les phases dans l'ordre. Aucune action destructive sans audit préalab
   - Adresse IP : `192.168.1.200`
   - Commentaire : `arr-server`
   - Sauvegarder
-  - *(Plage dynamique déjà réduite à 192.168.1.199 — aucune action supplémentaire sur l'onglet Serveur DHCP)*
+  - *(Plage dynamique déjà réduite à 192.168.1.199)*
 - [ ] `sudo hostnamectl set-hostname arr-server` (si pas fait à l'install)
-- [ ] Reboot serveur : `sudo reboot`
+- [ ] Reboot VM : `sudo reboot`
 - [ ] Vérifier IP fixe : `ip a` → 192.168.1.200
 - [ ] Vérifier accès depuis un autre appareil LAN : `ping 192.168.1.200`
 
 ---
 
-## Phase 3 — Préparation stockage (AGENT)
-> HDDs confirmés à formater. SMART vérifié Phase 1 avant toute écriture.
+## Phase 3 — Stockage VM (AGENT)
+> Pas de RAID, pas de mdadm — le RAID est géré par l'hôte Proxmox (ZFS ou LVM-thin).
+> Disque virtio unique → `/data` et `/docker/appdata` sont de simples répertoires sur `/`.
 
-- [ ] Confirmer résultats SMART — les deux drives sont exploitables ?
-- [ ] Identifier sans ambiguïté /dev/sdX et /dev/sdY (HDDs) vs /dev/sdZ (SSD)
+- [ ] Vérifier que `/` a assez d'espace : `df -h /`
+- [ ] Créer la structure `/data` :
+  ```bash
+  sudo mkdir -p /data/{torrents/{tv,movies,music},media/{tv,movies,music},personal/{photos,phone-camera,videos,documents,shared}}
+  ```
+- [ ] Créer `/docker/appdata` : `sudo mkdir -p /docker/appdata`
+- [ ] Appliquer permissions : `sudo chown -R 1000:1000 /data /docker/appdata`
+- [ ] **Vérifier hardlinks compatibles** : `stat -c '%m' /data/torrents /data/media` → même mountpoint
 
-### Chemin A — RAID1 *(chemin par défaut si les deux drives sont sains)*
-- [ ] `sudo apt install -y mdadm`
-- [ ] Créer le RAID1 : `sudo mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/sdX /dev/sdY`
-- [ ] `sudo mkfs.ext4 /dev/md0`
-- [ ] `sudo mkdir -p /data`
-- [ ] `sudo mount /dev/md0 /data`
-- [ ] Persister dans /etc/fstab via UUID : `sudo blkid /dev/md0`
-- [ ] Vérifier état RAID : `cat /proc/mdstat`
-- [ ] Sauvegarder config : `sudo mdadm --detail --scan | sudo tee -a /etc/mdadm/mdadm.conf`
-- [ ] `sudo update-initramfs -u`
-
-### Chemin B — Disque seul *(si un HDD échoue au SMART)*
-- [ ] Documenter pourquoi RAID différé dans JOURNAL.md
-- [ ] Préparer le disque sain seul : `mkfs.ext4 /dev/sdX`
-- [ ] Monter sur /data + persister fstab
-- [ ] Garder migration RAID documentée pour plus tard
+> Option future : si besoin d'isoler `/data` sur un second disque virtio, voir `docs/proxmox-storage-guide.md`. Dans ce cas, `/data/torrents` et `/data/media` DOIVENT rester sur le même FS.
 
 ---
 
@@ -131,13 +120,7 @@ Exécuter les phases dans l'ordre. Aucune action destructive sans audit préalab
   ```
 - [ ] Ajouter l'utilisateur au groupe docker : `sudo usermod -aG docker $USER`
 - [ ] Vérifier : `docker run hello-world`
-- [ ] Créer /docker/appdata : `sudo mkdir -p /docker/appdata`
-- [ ] Créer structure /data complète :
-  ```bash
-  sudo mkdir -p /data/{torrents/{tv,movies,music},media/{tv,movies,music},personal/{photos,phone-camera,videos,documents,shared}}
-  ```
-- [ ] Appliquer permissions : `sudo chown -R 1000:1000 /data /docker/appdata`
-- [ ] Cloner ou copier le repo sur le serveur
+- [ ] Cloner ou copier le repo sur la VM
 - [ ] Créer .env : `cp .env.example .env`
 - [ ] Remplir .env avec valeurs réelles (PUID, PGID via `id`, SERVER_IP=192.168.1.200, etc.)
 
@@ -146,7 +129,6 @@ Exécuter les phases dans l'ordre. Aucune action destructive sans audit préalab
 ## Phase 5 — Déploiement stack Docker (AGENT)
 - [ ] `docker compose config` — valider la config
 - [ ] Vérifier ports libres : `ss -tlnp`
-- [ ] Vérifier /dev/dri présent (sinon adapter le compose pour Jellyfin)
 - [ ] `make up` — lancer la stack
 - [ ] `make ps` — tous les conteneurs Up ?
 - [ ] `make logs` — erreurs critiques ?
@@ -219,7 +201,11 @@ Exécuter les phases dans l'ordre. Aucune action destructive sans audit préalab
 ### Jellyfin (8096)
 - [ ] Créer compte admin au premier accès
 - [ ] Ajouter bibliothèques : Movies → `/data/media/movies`, Shows → `/data/media/tv`, Music → `/data/media/music`
-- [ ] Hardware acceleration : Intel QuickSync (QSV) dans Dashboard → Playback → Transcoding
+- [ ] **Transcodage hardware désactivé** en Phase 1 (pas de passthrough GPU)
+- [ ] **Activer DLNA** : Dashboard → Plugins (ou Networking → DLNA selon version) → activer le serveur DLNA pour le Freebox Player
+- [ ] Priorité direct-play : la Freebox Player (Ultra) décode H.264/H.265/AAC nativement — aucun transcode requis
+- [ ] Clients alternatifs compatibles H.265 direct-play : app Jellyfin Android TV, Jellyfin Media Player (desktop), Infuse (Apple TV)
+- [ ] Passthrough GTX 1060 / NVENC = option future documentée dans `docs/gpu-passthrough-guide.md` (non activée)
 
 ### Syncthing (8384)
 - [ ] Définir user/password (Settings → GUI)
@@ -231,13 +217,14 @@ Exécuter les phases dans l'ordre. Aucune action destructive sans audit préalab
 ### Vérifications finales
 - [ ] DNS conteneurs : `docker exec -it radarr cat /etc/resolv.conf` → doit afficher 1.1.1.1
 - [ ] Hardlinks : comparer inodes `ls -i /data/media/movies/<film>` vs `ls -i /data/torrents/movies/<film>` — doivent être identiques
-- [ ] Backup — `./backup-arr-stack.sh /tmp/test-backup` + vérifier sortie
+- [ ] Backup applicatif — `./backup-arr-stack.sh /tmp/test-backup` + vérifier sortie
+- [ ] Backup VM — vérifier snapshot/backup Proxmox configuré (Datacenter → Backup, voir `docs/proxmox-backup-guide.md`)
 
 ---
 
 ## Phase 8 — Documentation finale (AGENT)
-- [ ] JOURNAL.md — décisions prises, chemin RAID choisi, valeurs réelles
-- [ ] credentials.md — MAC, IP confirmée, users, passwords Samba, API keys
+- [ ] JOURNAL.md — décisions prises, VMID Proxmox, storage utilisé, valeurs réelles
+- [ ] credentials.md — MAC virtuelle, IP confirmée, users, passwords Samba, API keys, VMID
 - [ ] REALISE.md — phases terminées archivées
 - [ ] TODO_SESSION.md — tâches terminées retirées
 
@@ -245,8 +232,8 @@ Exécuter les phases dans l'ordre. Aucune action destructive sans audit préalab
 
 ## Rappels sécurité
 
-- **Ne jamais formater un disque** sans avoir identifié clairement son /dev/sdX via lsblk + modèle
-- **Ne jamais supposer** que /dev/sda est le SSD ou le bon disque
-- **RAID ≠ Backup** — prévoir backup /docker/appdata séparé
+- **Toujours `hostnamectl` avant toute commande destructive** — confirmer qu'on est dans la VM et pas sur l'hôte Proxmox
+- **Actions côté hôte Proxmox** (snapshots, suppression VM, passthrough GPU, modif bridge) : demander confirmation utilisateur explicite
+- **RAID ≠ Backup** — Proxmox Backup Server (ou snapshot local) + `backup-arr-stack.sh` = deux niveaux complémentaires
 - **Tailscale en dernier** — stabiliser LAN d'abord
-- **Confirmer à l'utilisateur** avant toute commande mdadm ou mkfs
+- **Passthrough GPU** — n'activer que si besoin transcode réel avéré (voir `docs/gpu-passthrough-guide.md`)

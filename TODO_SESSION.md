@@ -1,26 +1,30 @@
 # TODO_SESSION.md — ARR Stack
 
 > Convention : ce fichier ne contient QUE des tâches non terminées [ ].
-> Dernière mise à jour : 2026-04-16
+> Dernière mise à jour : 2026-04-17
 
 ---
 
 ## Phase 0 — Complété ✅
-## Phase 0.5 — Hardware confirmé ✅
+## Phase 0.5 — Hôte Proxmox vérifié ✅
 
 ---
 
-## ► UTILISATEUR — Installation Debian 12 (actions manuelles)
+## ► UTILISATEUR + AGENT — Phase 0.7 Provisioning VM Proxmox
 
-- [ ] Télécharger ISO Debian 12 netinst amd64 sur debian.org
-- [ ] Créer clé USB bootable avec Rufus (Image mode)
-- [ ] Installer Debian 12 sur le Lenovo :
-  - Hostname : `arr-server`
-  - Cocher **SSH server** + standard utilities uniquement (pas de desktop)
-  - Partitionnement manuel : SSD → `/` complet, HDDs → laisser non partitionnés
-- [ ] Premier boot réussi
-- [ ] Récupérer l'IP actuelle (`ip a` sur la machine ou via le routeur)
-- [ ] **Donner à l'agent : IP actuelle + nom d'utilisateur**
+- [ ] **Utilisateur → Proxmox UI** : upload ISO Debian 12 netinst amd64 dans le storage
+- [ ] Choisir VMID libre (ex: `200`) et node (`rp-pve-01`)
+- [ ] Créer la VM (`qm create` ou UI) :
+  - 4 vCPU type `host`, 8 GB RAM (pas de ballooning agressif)
+  - Disque virtio-scsi 500 GB (storage : ZFS ou LVM-thin selon config hôte)
+  - Bridge `vmbr0`, NIC virtio — **noter la MAC générée**
+  - qemu-guest-agent enabled, Start at boot = yes
+  - **Pas de passthrough GPU** (GTX 1060 reste sur l'hôte)
+- [ ] Installer Debian 12 dans la VM via console Proxmox (noVNC/SPICE) :
+  - Hostname `arr-server`, SSH server + standard utilities uniquement
+  - Partitionnement guidé, tout en `/` ext4 (pas de RAID, pas de LVM)
+- [ ] Post-install dans la VM : `sudo apt install -y qemu-guest-agent && sudo systemctl enable --now qemu-guest-agent`
+- [ ] Récupérer l'IP obtenue + user SSH → **donner à l'agent**
 
 ---
 
@@ -28,37 +32,34 @@
 
 ---
 
-## Phase 1 — Audit machine (AGENT via SSH)
+## Phase 1 — Audit VM (AGENT via SSH)
 
-- [ ] `hostnamectl` — OS, version, hostname
-- [ ] `lscpu` + `free -h` — CPU, RAM
-- [ ] `lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,MODEL` — inventaire disques
-- [ ] `sudo fdisk -l` — tables de partition
-- [ ] `df -h` + `cat /etc/fstab` — montages actuels
-- [ ] `blkid` — UUIDs
-- [ ] SMART sur tous les disques (apt install smartmontools si absent)
-- [ ] `ls /dev/dri` — QuickSync disponible ?
-- [ ] `ip a` + `ip link` — MAC adresse interface principale
+- [ ] `hostnamectl` — confirmer qu'on est bien dans la VM `arr-server`
+- [ ] `lscpu` + `free -h` — 4 vCPU / 8 GB OK ?
+- [ ] `lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT` — disque virtio visible ?
+- [ ] `df -h` + `findmnt /` — montages actuels
+- [ ] `systemctl status qemu-guest-agent`
+- [ ] `ip a` + `ip link` — MAC virtuelle de l'interface principale
 
 ---
 
 ## Phase 2 — Réseau (AGENT + action routeur utilisateur)
 
-- [ ] Agent fournit MAC (`ip link show <interface>`)
+- [ ] Agent fournit MAC virtuelle (`ip link show <interface>` ou config VM Proxmox)
 - [ ] **Utilisateur → Freebox** : Paramètres → Réseau local → DHCP → **Baux Statiques** → Ajouter bail : MAC fournie / IP `192.168.1.200` / Commentaire `arr-server` → Sauvegarder *(plage dynamique déjà réduite à .199)*
 - [ ] `sudo hostnamectl set-hostname arr-server` si besoin
 - [ ] `sudo reboot` — vérifier IP fixe 192.168.1.200 active
 
 ---
 
-## Phase 3 — Stockage RAID1 (AGENT)
+## Phase 3 — Stockage VM (AGENT)
 
-- [ ] SMART OK sur les 2 HDDs ?
-- [ ] Identifier /dev/sdX et /dev/sdY (HDDs) sans ambiguïté
-- [ ] `sudo apt install -y mdadm`
-- [ ] Créer RAID1 `/dev/md0`
-- [ ] `mkfs.ext4 /dev/md0`
-- [ ] Monter /data + persister fstab (UUID) + update-initramfs
+> Pas de RAID, pas de mdadm — géré par l'hôte Proxmox. Disque virtio unique.
+
+- [ ] `df -h /` — espace suffisant ?
+- [ ] Créer structure `/data` complète + `/docker/appdata`
+- [ ] `sudo chown -R 1000:1000 /data /docker/appdata`
+- [ ] `stat -c '%m' /data/torrents /data/media` — même mountpoint (hardlinks OK) ?
 
 ---
 
@@ -66,8 +67,6 @@
 
 - [ ] Installer Docker Engine (méthode officielle Debian)
 - [ ] `docker run hello-world` — OK ?
-- [ ] Créer /docker/appdata + structure /data complète
-- [ ] `chown -R 1000:1000 /data /docker/appdata`
 - [ ] Créer .env depuis .env.example + remplir valeurs réelles
 
 ---
@@ -99,15 +98,16 @@
 - [ ] Sonarr — auth + root folder `/data/media/tv` + **hardlinks activés** + DL client (cat `tv`) + API key → Prowlarr
 - [ ] Lidarr — auth + root folder `/data/media/music` + DL client (cat `music`) + API key → Prowlarr
 - [ ] Bazarr — auth + profil langue + providers + connexion Radarr/Sonarr
-- [ ] Jellyfin — compte admin + bibliothèques + QuickSync activé
+- [ ] Jellyfin — compte admin + bibliothèques + **DLNA activé** pour Freebox Player (transcode HW désactivé en Phase 1)
 - [ ] Syncthing — auth + dossiers `/data/personal`
 - [ ] Samba — partages accessibles depuis LAN (`\\192.168.1.200\personal`, `\\192.168.1.200\media`)
 - [ ] DNS conteneurs : `docker exec -it radarr cat /etc/resolv.conf` → 1.1.1.1
 - [ ] Hardlinks — comparer inodes `/data/media/movies/<film>` vs `/data/torrents/movies/<film>`
-- [ ] Backup script — test `/tmp/test-backup`
+- [ ] Backup applicatif — test `./backup-arr-stack.sh /tmp/test-backup`
+- [ ] Backup VM — snapshot/backup Proxmox configuré (Datacenter → Backup)
 
 ---
 
 ## Phase 8 — Documentation (AGENT)
 
-- [ ] JOURNAL.md + credentials.md + REALISE.md mis à jour
+- [ ] JOURNAL.md + credentials.md + REALISE.md mis à jour (VMID, storage, MAC virtuelle, IP, API keys)
