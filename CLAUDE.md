@@ -2,7 +2,7 @@
 
 ## Rôle du projet
 Stack home server Docker dédiée à l'automatisation media et la synchronisation fichiers personnels.
-Projet E-MOTION / So'6 Rallye — déployé sur un vieux Lenovo desktop (Intel i5-6400).
+Projet E-MOTION / So'6 Rallye — déployé comme VM Debian 12 sur Proxmox VE (`rp-pve-01`, Ryzen 3700x, 62 GiB ECC).
 
 ---
 
@@ -31,10 +31,8 @@ Projet E-MOTION / So'6 Rallye — déployé sur un vieux Lenovo desktop (Intel i
 ## Architecture stockage
 
 ```
-SSD (OS + configs) :
+VM Debian 12 — disque virtio unique 500 GB (RAID géré par l'hôte Proxmox) :
   /docker/appdata/     ← configs persistantes de tous les conteneurs
-
-HDD Data (RAID1 cible) :
   /data/
     torrents/          ← téléchargements qBittorrent
       tv/ movies/ music/
@@ -46,6 +44,7 @@ HDD Data (RAID1 cible) :
 
 **Règle critique :** `/data/torrents` et `/data/media` DOIVENT être sur le MÊME filesystem.  
 Les ARR apps utilisent des hardlinks — si les partitions diffèrent, le système bascule en copie lente.
+Sur un disque virtuel unique, cette règle est naturellement respectée.
 
 ---
 
@@ -58,13 +57,15 @@ Les ARR apps utilisent des hardlinks — si les partitions diffèrent, le systè
 
 ---
 
-## Hardware cible
+## Infra cible
 
-- **Machine :** Lenovo desktop (Lenovo S510 ou équivalent)
-- **CPU :** Intel i5-6400 (4 cœurs, iGPU Intel HD 530)
-- **SSD :** OS + /docker/appdata
-- **HDDs :** 2× 2TB WD Caviar Black (2010) — RAID1 logiciel (mdadm)
-- **QuickSync :** `/dev/dri` requis (BIOS iGPU enabled)
+- **Hôte Proxmox :** `rp-pve-01` — Proxmox VE 8.0.9, Ryzen 3700x, 62 GiB ECC RAM, 1.52 TiB storage
+- **VM arr-server :** 4 vCPU / 8 GB RAM / disque virtio unique 500 GB, Debian 12 (Bookworm)
+- **Stockage :** disque virtuel unique — RAID géré par l'hôte Proxmox (ZFS ou LVM-thin selon config hôte). `/data` et `/docker/appdata` = simples répertoires sur ce disque.
+- **Réseau :** bridge `vmbr0` — VM visible sur le LAN 192.168.1.0/24 via MAC virtuelle éditable dans la config VM Proxmox
+- **GPU :** GTX 1060 6GB **reste sur l'hôte Proxmox** (sortie console physique — Ryzen 3700x sans iGPU). Pas de passthrough en Phase 1.
+- **Transcode Jellyfin :** **désactivé par défaut**. Stratégie = direct-play DLNA → Freebox Player (Freebox Ultra décode H.265 en hardware). Passthrough GTX 1060 (NVENC) documenté comme option future non-prioritaire (voir `docs/gpu-passthrough-guide.md`).
+- **Snapshots / backups VM :** gérés côté Proxmox (Datacenter → Backup). `backup-arr-stack.sh` couvre le niveau applicatif (`/docker/appdata` + `/data/personal` + configs système).
 
 ---
 
@@ -79,20 +80,20 @@ Les ARR apps utilisent des hardlinks — si les partitions diffèrent, le systè
 ## Règles pour les agents
 
 ### Actions DESTRUCTIVES — confirmation obligatoire avant d'exécuter
-- Formatage ou partitionnement de disque
-- Création ou destruction d'un RAID
+- Formatage ou partitionnement du disque virtuel de la VM
 - Suppression de `/data` ou `/docker/appdata`
 - Modification de `/etc/fstab`
+- Toute action côté hôte Proxmox (snapshots, suppression VM, passthrough GPU, modif bridge réseau)
 
-### Ordre d'audit avant toute action machine
-1. `lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,MODEL` — identifier les disques
-2. `smartctl -a /dev/sdX` — vérifier la santé SMART
-3. Confirmer quel disque est le SSD vs HDD avant toute écriture
+### Ordre d'audit avant toute action machine (dans la VM)
+1. `hostnamectl` — confirmer qu'on est bien dans la VM `arr-server` et non sur un autre hôte
+2. `lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT` — structure du disque virtio
+3. `df -h` + `findmnt /data` — confirmer les points de montage avant toute écriture
 
 ### Ne jamais supposer
-- Que `/dev/sda` est le bon disque à effacer
-- Que les HDDs sont vides (ils peuvent contenir des données)
-- Que les HDDs sont sains sans SMART vérifié
+- Que la VM tourne déjà avant d'exécuter des commandes (vérifier via SSH ou console Proxmox)
+- Que le GPU passthrough est configuré — vérifier côté hôte Proxmox avant toute config Jellyfin NVENC
+- Que les snapshots Proxmox sont actifs — vérifier Datacenter → Backup avant toute modif destructive
 
 ### Variables d'environnement
 - Lire `.env.example` pour la structure
