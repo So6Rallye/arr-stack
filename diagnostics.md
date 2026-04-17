@@ -27,7 +27,6 @@ Look for:
 - missing folders
 - permission errors
 - port conflicts
-- missing `/dev/dri`
 
 ---
 
@@ -56,15 +55,13 @@ id
 
 ---
 
-## Jellyfin QuickSync issues
+## Jellyfin transcoding
 
-Check whether the host exposes Intel graphics devices:
+Phase 1 strategy is **direct-play only** via Jellyfin DLNA → Freebox Player Ultra (native H.265 hardware decode). No GPU passthrough, no transcode.
 
-```bash
-ls /dev/dri
-```
+If a non-Freebox client forces transcode and CPU usage spikes, prefer switching the client to a direct-play compatible app (Jellyfin Android TV, Jellyfin Media Player, Infuse) before activating GPU passthrough.
 
-If nothing appears, verify BIOS iGPU settings and host support.
+NVIDIA NVENC passthrough for the GTX 1060 is documented as a future option in `docs/gpu-passthrough-guide.md` — not activated by default.
 
 ---
 
@@ -108,14 +105,12 @@ testparm
 
 ---
 
-## Existing HDDs must be prepared first
+## VM storage preparation
 
-If the HDDs are not empty:
+The VM uses a single virtio disk (500 GB) — RAID is handled by the Proxmox host. Before launching the stack:
 
-- inspect disks carefully
-- decide whether data must be preserved or erased
-- format only after confirming disk identity
+- confirm `/data` and `/docker/appdata` exist and are on the same filesystem (hardlink invariant)
+- check free space with `df -h /data`
+- verify mount via `findmnt /data`
 
-Do not skip storage preparation before launching the stack.
-
-Refer to `hardware-raid-guide.md` for storage planning and formatting context.
+Refer to `docs/proxmox-storage-guide.md` for resizing the virtio disk or adding a dedicated `/data` disk.

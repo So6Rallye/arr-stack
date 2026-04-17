@@ -184,25 +184,6 @@ Si ton utilisateur principal n'est pas `1000:1000`, il faudra adapter le `docker
 
 ## 7. Vérifications avant lancement
 
-### Vérifier que `/dev/dri` existe pour Jellyfin QuickSync
-
-```bash
-ls /dev/dri
-```
-
-Si tu vois `card0` et/ou `renderD128`, c'est bon.
-
-Si `/dev/dri` n'existe pas :
-
-- soit l'iGPU est désactivé dans le BIOS
-- soit le support n'est pas disponible
-- soit il faudra retirer temporairement ce bloc du compose :
-
-```yaml
-devices:
-  - /dev/dri:/dev/dri
-```
-
 ### Vérifier que les ports sont libres
 
 Ports utilisés par défaut :
@@ -225,15 +206,14 @@ Ports utilisés par défaut :
 2. Créer la structure `/data`
 3. Créer `/docker/appdata`
 4. Vérifier UID/GID
-5. Vérifier `/dev/dri`
-6. Placer `docker-compose.yml` dans le dossier du projet
-7. Lancer la stack
-8. Configurer qBittorrent
-9. Configurer Radarr / Sonarr / Lidarr
-10. Lier Prowlarr aux apps
-11. Ajouter les bibliothèques Jellyfin
-12. Configurer Syncthing
-13. Configurer Samba si besoin
+5. Placer `docker-compose.yml` dans le dossier du projet
+6. Lancer la stack
+7. Configurer qBittorrent
+8. Configurer Radarr / Sonarr / Lidarr
+9. Lier Prowlarr aux apps
+10. Ajouter les bibliothèques Jellyfin
+11. Configurer Syncthing
+12. Configurer Samba si besoin
 
 ---
 
@@ -453,16 +433,15 @@ Bibliothèques recommandées :
 - TV Shows → `/data/media/tv`
 - Music → `/data/media/music`
 
-### Accélération matérielle Intel
+### Transcode — stratégie Phase 1
 
-Le compose inclut :
+Transcode hardware **désactivé par défaut**. Stratégie = **direct-play pur** via le serveur DLNA Jellyfin vers le Freebox Player Ultra, qui décode H.265 nativement en hardware.
 
-```yaml
-devices:
-  - /dev/dri:/dev/dri
-```
+Activer DLNA dans Jellyfin : Dashboard → Plugins → DLNA (ou Dashboard → Networking → DLNA selon version).
 
-Cela sert à l'accélération matérielle Intel QuickSync, si le host est correctement configuré.
+Clients direct-play validés : Freebox Player Ultra (DLNA), Jellyfin Android TV, Jellyfin Media Player (desktop), Infuse (Apple TV).
+
+Passthrough NVIDIA (GTX 1060 NVENC) documenté comme option future dans `docs/gpu-passthrough-guide.md` — non activé en Phase 1 (la GTX 1060 reste la sortie console physique de l'hôte Proxmox).
 
 ---
 
@@ -639,7 +618,7 @@ Principe directeur :
 - `TZ` est réglé sur `Europe/Paris`
 - qBittorrent conserve explicitement `PUID`, `PGID` et `TZ`
 - Syncthing est inclus pour les fichiers personnels et la synchro téléphone
-- Jellyfin mappe `/dev/dri` pour Intel QuickSync
+- Jellyfin tourne en direct-play pur (DLNA → Freebox Player Ultra) — pas de transcode hardware en Phase 1
 - `/data/personal` est inclus dans la structure de dossiers
 
 ---
@@ -648,6 +627,6 @@ Principe directeur :
 
 - Tailscale pour l'accès distant
 - scripts de sauvegarde pour `/docker/appdata`
-- monitoring SMART des HDD
-- documentation de rebuild RAID et remplacement disque
+- snapshots / backups VM Proxmox (Datacenter → Backup)
+- passthrough GPU NVIDIA (GTX 1060) documenté comme option future — voir `docs/gpu-passthrough-guide.md`
 - support `.env` optionnel pour une personnalisation plus propre
