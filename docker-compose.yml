@@ -122,8 +122,25 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ${APPDATA_ROOT:-/docker/appdata}/jellyfin:/config
       - ${DATA_ROOT:-/data}/media:/data/media:ro
-    devices:
-      - /dev/dri:/dev/dri
+    # Hardware transcode — désactivé en Phase 1 (stratégie direct-play DLNA → Freebox Player).
+    # Décommenter UNE SEULE option si un besoin transcode réel émerge.
+    #
+    # Option A — NVIDIA GPU passthrough (ex: GTX 1060, nécessite passthrough Proxmox + nvidia-container-toolkit)
+    #   voir docs/gpu-passthrough-guide.md
+    # runtime: nvidia
+    # environment:
+    #   NVIDIA_VISIBLE_DEVICES: all
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    #
+    # Option B — Intel QuickSync (non applicable sur hôte Ryzen 3700x, conservé pour documentation)
+    # devices:
+    #   - /dev/dri:/dev/dri
 
 ###############################################
 # SYNCTHING - Personal files / phone sync
@@ -132,7 +149,7 @@ services:
     <<: *common-keys
     container_name: syncthing
     image: syncthing/syncthing:latest
-    hostname: lenovo-syncthing
+    hostname: arr-syncthing
     ports:
       - 8384:8384
       - 22000:22000/tcp
