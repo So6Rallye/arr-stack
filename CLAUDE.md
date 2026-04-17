@@ -1,5 +1,7 @@
 # CLAUDE.md — ARR Stack
 
+> **Variante Proxmox (VM Debian 12).** Version hors-Proxmox (Lenovo / RAID1 mdadm / Intel QuickSync) figée sur la branche `legacy/physical-lenovo` (tag `v0-physical-lenovo`).
+
 ## Rôle du projet
 Stack home server Docker dédiée à l'automatisation media et la synchronisation fichiers personnels.
 Projet E-MOTION / So'6 Rallye — déployé comme VM Debian 12 sur Proxmox VE (`rp-pve-01`, Ryzen 3700x, 62 GiB ECC).
@@ -20,7 +22,7 @@ Projet E-MOTION / So'6 Rallye — déployé comme VM Debian 12 sur Proxmox VE (`
 | Syncthing | Docker (syncthing/syncthing) | 8384 | Sync fichiers personnels |
 | Samba | Host (apt) | 445 | Partages SMB LAN |
 
-**OS :** Debian 12 (Bookworm) — choix retenu (plus léger qu'Ubuntu, pas de snap/cloud-init, mdadm natif)  
+**OS :** Debian 12 (Bookworm) — choix retenu (plus léger qu'Ubuntu, pas de snap/cloud-init)  
 **Runtime :** Docker Engine + Compose plugin  
 **Images :** hotio (ARR apps) + syncthing/syncthing  
 **Réseau Docker :** arr_network (bridge custom)  
@@ -71,9 +73,11 @@ Sur un disque virtuel unique, cette règle est naturellement respectée.
 
 ## Git
 
-- Branche de travail : **staging** — main/master protégé
+- Branche de travail : **main** — exception workspace (pas de `staging` sur ce repo, travail direct sur `main`)
+- Remote : https://github.com/So6Rallye/arr-stack
+- Branche legacy : `legacy/physical-lenovo` (tag `v0-physical-lenovo`) — dernière version hors-Proxmox, figée
 - Commits atomiques : un commit = un sujet précis
-- Secrets dans `.env` (gitignored), jamais dans le code
+- Secrets dans `.env` + `credentials.md` (tous deux gitignored), jamais dans le code
 
 ---
 

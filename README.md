@@ -1,3 +1,5 @@
+> **Variante Proxmox (VM Debian 12).** La version hors-Proxmox (Lenovo i5-6400 / RAID1 mdadm / Intel QuickSync) est figée sur la branche [`legacy/physical-lenovo`](https://github.com/So6Rallye/arr-stack/tree/legacy/physical-lenovo) (tag `v0-physical-lenovo`).
+
 # ARR Stack - Debian Home Server Edition
 
 Simple and reliable Docker stack for a Debian or Ubuntu home server with:
