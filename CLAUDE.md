@@ -113,6 +113,7 @@ Les ARR apps utilisent des hardlinks — si les partitions diffèrent, le systè
 | PLAN_DEPLOIEMENT.md | Phases de déploiement + roadmap |
 | AGENTS.md | Coordination multi-IA |
 | credentials.md | Secrets et valeurs de configuration (hors repo public) |
+| CONFIG-SERVICES.md | Guide de configuration UI par service (Phase 7) |
 | .brain/PROJECT_CONTEXT.md | Contexte projet local pour les agents |
 | .brain/LOCAL_LEARNINGS.md | Leçons spécifiques au projet |
 | .brain/SESSION_INBOX.md | Zone tampon IA — dépôt en fin de session |

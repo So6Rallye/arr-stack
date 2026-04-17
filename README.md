@@ -425,7 +425,13 @@ devices:
   - /dev/dri:/dev/dri
 ```
 
-This is meant for Intel QuickSync hardware acceleration, assuming the host is properly configured.
+This enables Intel QuickSync (QSV) hardware transcoding. Before enabling it in Jellyfin's dashboard, verify the device exists on the host:
+
+```bash
+ls /dev/dri
+```
+
+**If `/dev/dri` is absent** (iGPU disabled in BIOS or non-Intel hardware): Jellyfin starts normally and falls back to software transcoding (higher CPU load). If the container fails to start, remove the `devices:` block from `docker-compose.yml`.
 
 ---
 

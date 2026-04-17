@@ -45,7 +45,7 @@
 
 | Fonctionnalité | Statut | Notes |
 |---|---|---|
-| Intel QuickSync (Jellyfin transcode) | Planifié | /dev/dri — BIOS iGPU required |
+| Intel QuickSync (Jellyfin transcode) | Planifié | /dev/dri optionnel — fallback software transcoding si iGPU absent/désactivé |
 | Monitoring SMART disques | Planifié | smartmontools — check mensuel |
 | Watchtower (mises à jour auto) | Non-retenu | Mises à jour manuelles préférées (`make update`) |
 
@@ -55,8 +55,10 @@
 
 | Fonctionnalité | Statut | Notes |
 |---|---|---|
-| `make up/down/ps/logs` | Disponible | Makefile inclus |
-| Script backup automatisable (cron) | Disponible | `backup-arr-stack.sh` |
+| `make up/down/ps/logs/ps/pull/update` | Disponible | Makefile inclus |
+| `make check-hardlinks` | Disponible | Vérifie inodes media/ vs torrents/ — à lancer après premier contenu traité |
+| Script backup configurable (cron) | Disponible | `backup-arr-stack.sh` — lit `BACKUP_DEST` depuis `.env`, fallback `/backup` |
+| Backup destination configurable | Disponible | Variable `BACKUP_DEST` dans `.env.example`, créée par `install.sh` |
 | Checklist post-install | Disponible | `first-boot-checklist.md` |
 | Guide diagnostic | Disponible | `diagnostics.md` |
 | Guide restauration | Disponible | `restore-guide.md` |

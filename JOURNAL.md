@@ -19,3 +19,12 @@ Mis à jour à chaque session de travail.
 | 2026-04-16 | Mode opératoire déploiement défini : l'utilisateur installe Debian 12 manuellement (ISO, partitionnement, SSH activé), puis donne l'IP + user à l'agent qui prend la main en SSH pour toutes les phases suivantes (audit, RAID, Docker, stack, Samba, validation). |
 | 2026-04-16 | Décision : tous les identifiants, accès, clés et secrets centralisés dans credentials.md — 8 sections : Système, Réseau, .env Docker, Services web, API Keys, Samba, Tailscale, Stockage/RAID. |
 | 2026-04-17 | Audit pré-déploiement : 6 corrections appliquées — credentials.md ajouté au .gitignore (critique), rotation logs docker-compose (max-size 10m / max-file 3), backup mdadm.conf + fstab dans backup-arr-stack.sh, vérification montage /data dans install.sh, .PHONY dans Makefile, section "future improvements" README.md nettoyée (items déjà livrés). |
+| 2026-04-17 | Freebox DHCP — plage dynamique réduite à 192.168.1.199 (fin de plage). Bail statique à créer en Phase 2 : MAC arr-server → 192.168.1.200 + commentaire "arr-server" via Baux Statiques. |
+| 2026-04-17 | Création CONFIG-SERVICES.md (racine) — guide complet de configuration UI par service pour Phase 7 : qBittorrent (ordre catégories critique), hardlinks ARR, noms Docker inter-conteneurs, API keys, FlareSolverr optionnel. |
+| 2026-04-17 | Audit global cohérence pré-déploiement (30 fichiers) — zéro incohérence majeure trouvée. |
+| 2026-04-17 | Ajout BACKUP_DEST dans .env.example — variable configurable pour le répertoire de backup, créée par install.sh, lue par backup-arr-stack.sh. |
+| 2026-04-17 | install.sh — source .env au démarrage, crée BACKUP_DEST, affiche rappel make check-hardlinks en fin. |
+| 2026-04-17 | backup-arr-stack.sh — source .env pour BACKUP_DEST, fallback /backup si absent. |
+| 2026-04-17 | Ajout make check-hardlinks — vérifie les inodes media/ vs torrents/ après premier contenu traité. |
+| 2026-04-17 | Jellyfin /dev/dri — documenté comme optionnel dans CONFIG-SERVICES.md et README.md : fallback software transcoding si iGPU absent ou désactivé. |
+| 2026-04-17 | Stratégie backup confirmée : /data/media non sauvegardé (re-téléchargeable), seuls /docker/appdata + /data/personal + configs système sauvegardés. |

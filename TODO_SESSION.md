@@ -39,15 +39,15 @@
 - [ ] SMART sur tous les disques (apt install smartmontools si absent)
 - [ ] `ls /dev/dri` — QuickSync disponible ?
 - [ ] `ip a` + `ip link` — MAC adresse interface principale
-- [ ] Docker déjà installé ?
 
 ---
 
 ## Phase 2 — Réseau (AGENT + action routeur utilisateur)
 
-- [ ] Communiquer MAC → utilisateur configure réservation DHCP (MAC → 192.168.1.200)
+- [ ] Agent fournit MAC (`ip link show <interface>`)
+- [ ] **Utilisateur → Freebox** : Paramètres → Réseau local → DHCP → **Baux Statiques** → Ajouter bail : MAC fournie / IP `192.168.1.200` / Commentaire `arr-server` → Sauvegarder *(plage dynamique déjà réduite à .199)*
 - [ ] `sudo hostnamectl set-hostname arr-server` si besoin
-- [ ] Vérifier IP fixe 192.168.1.200 active
+- [ ] `sudo reboot` — vérifier IP fixe 192.168.1.200 active
 
 ---
 
@@ -89,18 +89,21 @@
 
 ---
 
-## Phase 7 — Validation services (AGENT)
+## Phase 7 — Configuration services (AGENT)
 
-- [ ] qBittorrent (8080) + password temporaire
-- [ ] Radarr (7878) + root folder
-- [ ] Sonarr (8989) + root folder
-- [ ] Lidarr (8686) + root folder
-- [ ] Prowlarr (9696) + connexion ARR apps
-- [ ] Bazarr (6767) + langues
-- [ ] Jellyfin (8096) + bibliothèques
-- [ ] Syncthing (8384) + dossiers personal
-- [ ] Samba — accessible depuis LAN
-- [ ] Hardlinks — test inode
+> Détail complet : `CONFIG-SERVICES.md`
+
+- [ ] qBittorrent — password logs → catégories (movies/tv/music) EN PREMIER → Downloads : mode Automatic + Default Save Path `/data/torrents`
+- [ ] Prowlarr — auth + download client qBittorrent (host `qbittorrent`) + indexeurs
+- [ ] Radarr — auth + root folder `/data/media/movies` + **hardlinks activés** + DL client (cat `movies`) + API key → Prowlarr
+- [ ] Sonarr — auth + root folder `/data/media/tv` + **hardlinks activés** + DL client (cat `tv`) + API key → Prowlarr
+- [ ] Lidarr — auth + root folder `/data/media/music` + DL client (cat `music`) + API key → Prowlarr
+- [ ] Bazarr — auth + profil langue + providers + connexion Radarr/Sonarr
+- [ ] Jellyfin — compte admin + bibliothèques + QuickSync activé
+- [ ] Syncthing — auth + dossiers `/data/personal`
+- [ ] Samba — partages accessibles depuis LAN (`\\192.168.1.200\personal`, `\\192.168.1.200\media`)
+- [ ] DNS conteneurs : `docker exec -it radarr cat /etc/resolv.conf` → 1.1.1.1
+- [ ] Hardlinks — comparer inodes `/data/media/movies/<film>` vs `/data/torrents/movies/<film>`
 - [ ] Backup script — test `/tmp/test-backup`
 
 ---

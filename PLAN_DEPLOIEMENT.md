@@ -74,15 +74,22 @@ Exécuter les phases dans l'ordre. Aucune action destructive sans audit préalab
 - [ ] `sudo smartctl -a /dev/sda` + `/dev/sdb` + `/dev/sdc` — SMART sur tous les disques
 - [ ] `ls /dev/dri` — vérifier QuickSync Intel disponible
 - [ ] `ip a` + `ip link` — interfaces réseau + noter adresse MAC
-- [ ] `docker --version` 2>/dev/null — Docker déjà présent ?
 - [ ] Résumé : identifier SSD / HDD1 / HDD2 sans ambiguïté, santé SMART, plan toujours valide
 
 ---
 
 ## Phase 2 — Réseau (AGENT + action routeur utilisateur)
-- [ ] Communiquer la MAC adresse à l'utilisateur → réservation DHCP sur le routeur : MAC → **192.168.1.200**
+- [ ] L'agent communique la MAC adresse (depuis `ip link show <interface>`)
+- [ ] **Utilisateur → Freebox** :
+  - Paramètres Freebox → Réseau local → DHCP → onglet **Baux Statiques**
+  - Cliquer **"+ Ajouter un bail DHCP Statique"**
+  - Adresse MAC : *(valeur donnée par l'agent)*
+  - Adresse IP : `192.168.1.200`
+  - Commentaire : `arr-server`
+  - Sauvegarder
+  - *(Plage dynamique déjà réduite à 192.168.1.199 — aucune action supplémentaire sur l'onglet Serveur DHCP)*
 - [ ] `sudo hostnamectl set-hostname arr-server` (si pas fait à l'install)
-- [ ] Après réservation DHCP : reboot ou `sudo dhclient -r && sudo dhclient`
+- [ ] Reboot serveur : `sudo reboot`
 - [ ] Vérifier IP fixe : `ip a` → 192.168.1.200
 - [ ] Vérifier accès depuis un autre appareil LAN : `ping 192.168.1.200`
 
@@ -168,17 +175,62 @@ Exécuter les phases dans l'ordre. Aucune action destructive sans audit préalab
 
 ---
 
-## Phase 7 — Validation post-déploiement (AGENT)
-- [ ] qBittorrent (8080) — accès UI + récupérer password : `docker logs qbittorrent`
-- [ ] Radarr (7878) — accès UI + root folder `/data/media/movies`
-- [ ] Sonarr (8989) — accès UI + root folder `/data/media/tv`
-- [ ] Lidarr (8686) — accès UI + root folder `/data/media/music`
-- [ ] Prowlarr (9696) — accès UI + connexion ARR apps via API keys
-- [ ] Bazarr (6767) — accès UI + langues + providers
-- [ ] Jellyfin (8096) — accès UI + bibliothèques créées
-- [ ] Syncthing (8384) — accès UI + dossiers /data/personal configurés
-- [ ] Samba — partages accessibles depuis LAN
-- [ ] Hardlinks — vérifier même inode après un import test
+## Phase 7 — Configuration et validation services (AGENT)
+
+> Guide détaillé par service : `CONFIG-SERVICES.md` (racine du projet)
+
+### qBittorrent (8080)
+- [ ] `docker logs qbittorrent` — récupérer le mot de passe temporaire
+- [ ] Changer user/password : `Tools → Options → WebUI`
+- [ ] Créer catégories EN PREMIER (panneau gauche → Categories → All → clic droit) : `movies`, `tv`, `music`
+- [ ] `Tools → Options → Downloads` : mode Automatic, Relocate on category change, Default Save Path `/data/torrents`
+
+### Prowlarr (9696)
+- [ ] Définir authentification (Form)
+- [ ] Ajouter download client qBittorrent : host `qbittorrent`, port `8080`, SSL désactivé
+- [ ] Ajouter indexeurs
+
+### Radarr (7878)
+- [ ] Définir authentification (Form)
+- [ ] Root folder : `/data/media/movies`
+- [ ] **Activer hardlinks** : Settings → Media Management → Show Advanced → Use Hardlinks instead of Copy ✅
+- [ ] Ajouter download client qBittorrent — catégorie : `movies`
+- [ ] Copier API key → Prowlarr → Apps → Radarr (servers : `http://prowlarr:9696` / `http://radarr:7878`)
+
+### Sonarr (8989)
+- [ ] Définir authentification (Form)
+- [ ] Root folder : `/data/media/tv`
+- [ ] **Activer hardlinks** : Settings → Media Management → Show Advanced → Use Hardlinks instead of Copy ✅
+- [ ] Ajouter download client qBittorrent — catégorie : `tv` (pas `tv-sonarr`)
+- [ ] Copier API key → Prowlarr → Apps → Sonarr (servers : `http://prowlarr:9696` / `http://sonarr:8989`)
+
+### Lidarr (8686)
+- [ ] Définir authentification (Form)
+- [ ] Root folder : `/data/media/music`
+- [ ] Ajouter download client qBittorrent — catégorie : `music` (pas `lidarr`)
+- [ ] Copier API key → Prowlarr → Apps → Lidarr (servers : `http://prowlarr:9696` / `http://lidarr:8686`)
+
+### Bazarr (6767)
+- [ ] Définir authentification (Form)
+- [ ] Créer profil de langue (Français ou FR+EN)
+- [ ] Ajouter providers (OpenSubtitles, etc.)
+- [ ] Connecter Radarr (`radarr:7878` + API key) et Sonarr (`sonarr:8989` + API key)
+
+### Jellyfin (8096)
+- [ ] Créer compte admin au premier accès
+- [ ] Ajouter bibliothèques : Movies → `/data/media/movies`, Shows → `/data/media/tv`, Music → `/data/media/music`
+- [ ] Hardware acceleration : Intel QuickSync (QSV) dans Dashboard → Playback → Transcoding
+
+### Syncthing (8384)
+- [ ] Définir user/password (Settings → GUI)
+- [ ] Ajouter dossiers `/data/personal/*` + lier aux appareils
+
+### Samba
+- [ ] Partages accessibles depuis LAN : `\\192.168.1.200\personal` et `\\192.168.1.200\media`
+
+### Vérifications finales
+- [ ] DNS conteneurs : `docker exec -it radarr cat /etc/resolv.conf` → doit afficher 1.1.1.1
+- [ ] Hardlinks : comparer inodes `ls -i /data/media/movies/<film>` vs `ls -i /data/torrents/movies/<film>` — doivent être identiques
 - [ ] Backup — `./backup-arr-stack.sh /tmp/test-backup` + vérifier sortie
 
 ---
