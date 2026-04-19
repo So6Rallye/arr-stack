@@ -1,10 +1,13 @@
-.PHONY: up down restart logs ps pull update backup check-hardlinks
+.PHONY: up down restart logs ps pull update backup check-hardlinks \
+        up-arr down-arr pull-arr logs-arr \
+        up-immich down-immich pull-immich logs-immich
 
-up:
-	sudo docker compose up -d
+# Both stacks
+up: up-arr up-immich
 
-down:
-	sudo docker compose down
+down: down-arr down-immich
+
+pull: pull-arr pull-immich
 
 restart:
 	sudo docker compose down && sudo docker compose up -d
@@ -15,14 +18,37 @@ logs:
 ps:
 	sudo docker compose ps
 
-pull:
-	sudo docker compose pull
-
 update:
 	sudo docker compose pull && sudo docker compose up -d
 
 backup:
 	sudo ./backup-arr-stack.sh
+
+# ARR stack only
+up-arr:
+	sudo docker compose up -d
+
+down-arr:
+	sudo docker compose down
+
+pull-arr:
+	sudo docker compose pull
+
+logs-arr:
+	sudo docker compose logs -f
+
+# Immich stack only
+up-immich:
+	sudo docker compose -f docker-compose.immich.yml up -d
+
+down-immich:
+	sudo docker compose -f docker-compose.immich.yml down
+
+pull-immich:
+	sudo docker compose -f docker-compose.immich.yml pull
+
+logs-immich:
+	sudo docker compose -f docker-compose.immich.yml logs -f
 
 check-hardlinks:
 	@echo "Checking hardlinks — media/ vs torrents/ (inodes must match)..."

@@ -16,10 +16,13 @@ echo "UID: $(id -u)"
 echo "GID: $(id -g)"
 
 echo "Creating appdata folders..."
-sudo mkdir -p /docker/appdata/{radarr,sonarr,lidarr,bazarr,prowlarr,qbittorrent,jellyfin,syncthing}
+sudo mkdir -p /docker/appdata/{radarr,sonarr,lidarr,bazarr,prowlarr,qbittorrent,jellyfin,syncthing,gluetun,jellyseerr,flaresolverr,immich-postgres,immich-redis,immich-ml-cache,navidrome}
 
 echo "Creating data folders..."
 sudo mkdir -p /data/{torrents/{tv,movies,music},media/{tv,movies,music},personal/{photos,phone-camera,videos,documents,shared}}
+
+echo "Creating Immich photos folders..."
+sudo mkdir -p /data/photos/{library,upload}
 
 echo "Creating backup destination: $BACKUP_DEST"
 sudo mkdir -p "$BACKUP_DEST"

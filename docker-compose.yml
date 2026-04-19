@@ -1,5 +1,5 @@
 ###############################################
-# Common Keys for all apps
+# Common Keys for apps NOT behind VPN
 ###############################################
 
 x-common-keys: &common-keys
@@ -17,16 +17,69 @@ x-common-keys: &common-keys
     - 1.1.1.1
     - 1.0.0.1
 
+###############################################
+# Common Keys for apps behind Gluetun VPN
+###############################################
+
+x-vpn-keys: &vpn-keys
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+  network_mode: "service:gluetun"
+  depends_on:
+    - gluetun
+
 services:
+###############################################
+# GLUETUN - VPN Gateway (ProtonVPN WireGuard)
+###############################################
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - 8080:8080     # qBittorrent WebUI
+      - 6881:6881     # qBittorrent torrent
+      - 6881:6881/udp
+      - 7878:7878     # Radarr
+      - 8989:8989     # Sonarr
+      - 8686:8686     # Lidarr
+      - 6767:6767     # Bazarr
+      - 9696:9696     # Prowlarr
+      - 8191:8191     # FlareSolverr
+    environment:
+      VPN_SERVICE_PROVIDER: ${VPN_SERVICE_PROVIDER:-protonvpn}
+      VPN_TYPE: ${VPN_TYPE:-wireguard}
+      WIREGUARD_PRIVATE_KEY: ${WIREGUARD_PRIVATE_KEY}
+      SERVER_COUNTRIES: ${VPN_SERVER_COUNTRIES:-Netherlands}
+    volumes:
+      - ${APPDATA_ROOT:-/docker/appdata}/gluetun:/gluetun
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - arr_network
+
 ###############################################
 # RADARR - Movies
 ###############################################
   radarr:
-    <<: *common-keys
+    <<: *vpn-keys
     container_name: radarr
     image: ghcr.io/hotio/radarr:latest
-    ports:
-      - 7878:7878
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-Europe/Paris}
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ${APPDATA_ROOT:-/docker/appdata}/radarr:/config
@@ -36,11 +89,13 @@ services:
 # SONARR - TV Shows
 ###############################################
   sonarr:
-    <<: *common-keys
+    <<: *vpn-keys
     container_name: sonarr
     image: ghcr.io/hotio/sonarr:latest
-    ports:
-      - 8989:8989
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-Europe/Paris}
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ${APPDATA_ROOT:-/docker/appdata}/sonarr:/config
@@ -50,11 +105,13 @@ services:
 # LIDARR - Music
 ###############################################
   lidarr:
-    <<: *common-keys
+    <<: *vpn-keys
     container_name: lidarr
     image: ghcr.io/hotio/lidarr:latest
-    ports:
-      - 8686:8686
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-Europe/Paris}
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ${APPDATA_ROOT:-/docker/appdata}/lidarr:/config
@@ -64,11 +121,13 @@ services:
 # BAZARR - Subtitles
 ###############################################
   bazarr:
-    <<: *common-keys
+    <<: *vpn-keys
     container_name: bazarr
     image: ghcr.io/hotio/bazarr:latest
-    ports:
-      - 6767:6767
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-Europe/Paris}
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ${APPDATA_ROOT:-/docker/appdata}/bazarr:/config
@@ -78,11 +137,13 @@ services:
 # PROWLARR - Indexer Manager
 ###############################################
   prowlarr:
-    <<: *common-keys
+    <<: *vpn-keys
     container_name: prowlarr
     image: ghcr.io/hotio/prowlarr:latest
-    ports:
-      - 9696:9696
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-Europe/Paris}
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ${APPDATA_ROOT:-/docker/appdata}/prowlarr:/config
@@ -91,13 +152,9 @@ services:
 # QBITTORRENT - Downloader
 ###############################################
   qbittorrent:
-    <<: *common-keys
+    <<: *vpn-keys
     container_name: qbittorrent
     image: ghcr.io/hotio/qbittorrent:latest
-    ports:
-      - 8080:8080
-      - 6881:6881
-      - 6881:6881/udp
     environment:
       PUID: ${PUID:-1000}
       PGID: ${PGID:-1000}
@@ -108,6 +165,17 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ${APPDATA_ROOT:-/docker/appdata}/qbittorrent:/config
       - ${DATA_ROOT:-/data}:/data
+
+###############################################
+# FLARESOLVERR - Cloudflare bypass for Prowlarr
+###############################################
+  flaresolverr:
+    <<: *vpn-keys
+    container_name: flaresolverr
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    environment:
+      LOG_LEVEL: info
+      TZ: ${TZ:-Europe/Paris}
 
 ###############################################
 # JELLYFIN - Media Server
@@ -122,6 +190,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ${APPDATA_ROOT:-/docker/appdata}/jellyfin:/config
       - ${DATA_ROOT:-/data}/media:/data/media:ro
+    networks:
+      - arr_network
     # Hardware transcode — désactivé en Phase 1 (stratégie direct-play DLNA → Freebox Player).
     # Décommenter UNE SEULE option si un besoin transcode réel émerge.
     #
@@ -143,6 +213,21 @@ services:
     #   - /dev/dri:/dev/dri
 
 ###############################################
+# JELLYSEERR - Media Request Manager
+###############################################
+  jellyseerr:
+    <<: *common-keys
+    container_name: jellyseerr
+    image: fallenbagel/jellyseerr:latest
+    ports:
+      - 5055:5055
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${APPDATA_ROOT:-/docker/appdata}/jellyseerr:/app/config
+    networks:
+      - arr_network
+
+###############################################
 # SYNCTHING - Personal files / phone sync
 ###############################################
   syncthing:
@@ -159,10 +244,32 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ${APPDATA_ROOT:-/docker/appdata}/syncthing:/var/syncthing
       - ${DATA_ROOT:-/data}/personal:/data/personal
+    networks:
+      - arr_network
+
+###############################################
+# NAVIDROME - Music Server (Subsonic API)
+###############################################
+  navidrome:
+    <<: *common-keys
+    container_name: navidrome
+    image: deluan/navidrome:latest
+    ports:
+      - "4533:4533"
+    environment:
+      ND_MUSICFOLDER: /music
+      ND_DATAFOLDER: /data
+      ND_LOGLEVEL: info
+      ND_SESSIONTIMEOUT: 24h
+    volumes:
+      - ${APPDATA_ROOT:-/docker/appdata}/navidrome:/data
+      - ${DATA_ROOT:-/data}/media/music:/music:ro
+    networks:
+      - arr_network
 
 ###############################################
 # ARR Stack Dedicated Network
 ###############################################
 networks:
-  default:
+  arr_network:
     name: arr_network

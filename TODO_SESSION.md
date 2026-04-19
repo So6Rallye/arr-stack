@@ -10,7 +10,17 @@
 
 ---
 
+- [ ] Remplir les valeurs dans `credentials.md` : clé WireGuard ProtonVPN + mots de passe Immich (DB + comptes admin/parent/enfant)
+
 ## ► UTILISATEUR + AGENT — Phase 0.7 Provisioning VM Proxmox
+
+- [ ] Changement réseau > Freebox
+- vmbr0 → Edit dans l'UI
+- CIDR : 192.168.1.253/24
+- Gateway : 192.168.1.254
+- OK → Apply Configuration
+- Branche la Freebox, débranche l'ancien réseau
+- https://192.168.1.253:8006
 
 - [ ] **Utilisateur → Proxmox UI** : upload ISO Debian 12 netinst amd64 dans le storage
 - [ ] Choisir VMID libre (ex: `200`) et node (`rp-pve-01`)

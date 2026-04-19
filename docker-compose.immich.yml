@@ -1,0 +1,129 @@
+###############################################
+# Immich Stack — Photo / Video Management
+# Séparé de docker-compose.yml (image postgres custom, cycle de mise à jour indépendant)
+# Démarrage : make up-immich   Arrêt : make down-immich
+###############################################
+
+services:
+###############################################
+# IMMICH SERVER - Main API + Web UI
+###############################################
+  immich-server:
+    image: ghcr.io/immich-app/immich-server:release
+    container_name: immich-server
+    restart: unless-stopped
+    depends_on:
+      - database
+      - redis
+    ports:
+      - 2283:2283
+    environment:
+      DB_HOSTNAME: database
+      DB_USERNAME: ${IMMICH_DB_USER:-immich}
+      DB_PASSWORD: ${IMMICH_DB_PASSWORD}
+      DB_DATABASE_NAME: ${IMMICH_DB_NAME:-immich}
+      REDIS_HOSTNAME: redis
+      TZ: ${TZ:-Europe/Paris}
+    volumes:
+      - ${DATA_ROOT:-/data}/photos/library:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - immich_network
+
+###############################################
+# IMMICH MICROSERVICES - Background jobs
+###############################################
+  immich-microservices:
+    image: ghcr.io/immich-app/immich-server:release
+    container_name: immich-microservices
+    restart: unless-stopped
+    command: ["start.sh", "microservices"]
+    depends_on:
+      - database
+      - redis
+    environment:
+      DB_HOSTNAME: database
+      DB_USERNAME: ${IMMICH_DB_USER:-immich}
+      DB_PASSWORD: ${IMMICH_DB_PASSWORD}
+      DB_DATABASE_NAME: ${IMMICH_DB_NAME:-immich}
+      REDIS_HOSTNAME: redis
+      TZ: ${TZ:-Europe/Paris}
+    volumes:
+      - ${DATA_ROOT:-/data}/photos/library:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - immich_network
+
+###############################################
+# IMMICH MACHINE LEARNING - CLIP + Face reco
+###############################################
+  immich-machine-learning:
+    image: ghcr.io/immich-app/immich-machine-learning:release
+    container_name: immich-machine-learning
+    restart: unless-stopped
+    volumes:
+      - ${APPDATA_ROOT:-/docker/appdata}/immich-ml-cache:/cache
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - immich_network
+
+###############################################
+# POSTGRESQL - Metadata + vector search (pgvecto-rs)
+###############################################
+  database:
+    image: tensorchord/pgvecto-rs:pg14-v0.2.0
+    container_name: immich-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${IMMICH_DB_USER:-immich}
+      POSTGRES_PASSWORD: ${IMMICH_DB_PASSWORD}
+      POSTGRES_DB: ${IMMICH_DB_NAME:-immich}
+    volumes:
+      - ${APPDATA_ROOT:-/docker/appdata}/immich-postgres:/var/lib/postgresql/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - immich_network
+
+###############################################
+# REDIS - Job queues + cache + sessions
+###############################################
+  redis:
+    image: redis:6.2-alpine
+    container_name: immich-redis
+    restart: unless-stopped
+    volumes:
+      - ${APPDATA_ROOT:-/docker/appdata}/immich-redis:/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - immich_network
+
+###############################################
+# Immich Dedicated Network
+###############################################
+networks:
+  immich_network:
+    name: immich_network

@@ -4,22 +4,31 @@
 
 Simple and reliable Docker stack for a Debian or Ubuntu home server with:
 
+- Gluetun (ProtonVPN WireGuard)
 - Radarr
 - Sonarr
 - Lidarr
 - Bazarr
 - Prowlarr
+- FlareSolverr
 - qBittorrent
 - Jellyfin
+- Jellyseerr
 - Syncthing
+- Immich
 
 This version is tailored for a personal home server focused on:
 
+- VPN-routed torrent traffic (Gluetun + ProtonVPN WireGuard)
 - clean hardlink-friendly folder structure
 - torrent-based downloads
+- private indexing via FlareSolverr (Cloudflare bypass)
+- media request management via Jellyseerr
 - Jellyfin media library
+- family photo management with Immich
 - phone and PC file sync with Syncthing
 - SMB/Samba shares on the host
+- remote access via Tailscale (100.x.x.x)
 - France timezone
 - direct-play streaming to Freebox Player Ultra (H.265 hardware decode) — no GPU transcode required
 
@@ -47,14 +56,32 @@ See [docs/proxmox-vm-guide.md](./docs/proxmox-vm-guide.md) for VM provisioning d
 
 ## Included services
 
-- **Radarr** for movies
-- **Sonarr** for TV shows
-- **Lidarr** for music
-- **Bazarr** for subtitles
-- **Prowlarr** for indexer management
-- **qBittorrent** as torrent client
-- **Jellyfin** as media server
-- **Syncthing** for personal file and phone sync
+The stack uses **2 docker-compose files**:
+
+- `docker-compose.yml` — ARR stack + VPN + media server
+- `docker-compose.immich.yml` — Immich stack (self-hosted photos)
+
+### ARR stack services (docker-compose.yml)
+
+- **Gluetun** — VPN gateway (ProtonVPN WireGuard)
+- **qBittorrent** — torrent client (routed via VPN)
+- **Radarr** — movie automation
+- **Sonarr** — TV series automation
+- **Lidarr** — music automation
+- **Bazarr** — subtitle automation
+- **Prowlarr** — indexer management
+- **FlareSolverr** — Cloudflare bypass proxy (routed via VPN)
+- **Jellyfin** — media server
+- **Jellyseerr** — media request manager
+- **Syncthing** — personal file sync
+
+### Immich stack services (docker-compose.immich.yml)
+
+- **Immich** — self-hosted Google Photos replacement
+- **Immich Microservices** — background processing
+- **Immich Machine Learning** — face recognition
+- **PostgreSQL pgvecto-rs** — database with vector support
+- **Redis** — caching
 
 ---
 
@@ -75,6 +102,7 @@ Use your data volume for:
 - `/data/torrents`
 - `/data/media`
 - `/data/personal`
+- `/data/photos` (Immich library + uploads)
 
 This separation keeps configs fast and clean while storing large files on the data disks.
 
@@ -182,15 +210,20 @@ That is what allows hardlinks to work correctly between downloads and final libr
 1. Install Docker and Docker Compose
 2. Create the `/data` folder structure
 3. Prepare storage correctly if your HDDs are not empty
-4. Put `docker-compose.yml` in your project folder
+4. Put `docker-compose.yml` and `docker-compose.immich.yml` in your project folder
 5. Copy `.env.example` to `.env` and adjust values
-6. Start the stack
-7. Configure qBittorrent categories
-8. Configure Radarr / Sonarr / Lidarr root folders
-9. Link Prowlarr to the apps
-10. Add Jellyfin libraries
-11. Configure Syncthing for personal files
-12. Configure Samba on the host if you want SMB shares
+6. Run `make up` to start both stacks
+7. Configure Gluetun and verify VPN is active
+8. Configure qBittorrent categories
+9. Configure FlareSolverr proxy in Prowlarr
+10. Configure Radarr / Sonarr / Lidarr root folders
+11. Link Prowlarr to the apps
+12. Configure Jellyseerr for media requests
+13. Add Jellyfin libraries
+14. Configure Immich for family photos
+15. Configure Syncthing for personal files
+16. Configure Samba on the host if you want SMB shares
+17. Install Tailscale for remote access
 
 ---
 
@@ -206,19 +239,30 @@ This stack runs inside a Debian 12 VM on Proxmox. Before starting Docker:
 
 ---
 
-## Start the stack
+## Start the stacks
 
-From the folder containing `docker-compose.yml`:
+From the folder containing `docker-compose.yml` and `docker-compose.immich.yml`:
 
 ```bash
-sudo docker compose up -d
+make up
 ```
 
-To restart the full stack later:
+This starts both the ARR stack and the Immich stack.
+
+To restart the stacks later:
 
 ```bash
-sudo docker compose down
-sudo docker compose up -d
+make down
+make up
+```
+
+For individual stacks:
+
+```bash
+make up-arr        # ARR stack only
+make up-immich     # Immich stack only
+make down-arr      # ARR stack only
+make down-immich   # Immich stack only
 ```
 
 ---
@@ -227,33 +271,48 @@ sudo docker compose up -d
 
 ### From the server itself
 
+**ARR stack:**
+- Gluetun: VPN gateway (no UI)
 - qBittorrent: `http://localhost:8080`
 - Prowlarr: `http://localhost:9696`
 - Radarr: `http://localhost:7878`
 - Sonarr: `http://localhost:8989`
 - Lidarr: `http://localhost:8686`
 - Bazarr: `http://localhost:6767`
+- FlareSolverr: `http://localhost:8191` (via Prowlarr only, no standalone UI)
 - Jellyfin: `http://localhost:8096`
+- Jellyseerr: `http://localhost:5055`
 - Syncthing: `http://localhost:8384`
+
+**Immich stack:**
+- Immich: `http://localhost:2283`
 
 ### From another device on your LAN
 
-Replace `IP_DU_SERVEUR` with your server IP.
+Replace `192.168.1.200` with your server IP (recommended value for this project).
 
-Recommended value for this project:
+**ARR stack:**
+- `http://192.168.1.200:8080` — qBittorrent
+- `http://192.168.1.200:9696` — Prowlarr
+- `http://192.168.1.200:7878` — Radarr
+- `http://192.168.1.200:8989` — Sonarr
+- `http://192.168.1.200:8686` — Lidarr
+- `http://192.168.1.200:6767` — Bazarr
+- `http://192.168.1.200:8096` — Jellyfin
+- `http://192.168.1.200:5055` — Jellyseerr
+- `http://192.168.1.200:8384` — Syncthing
 
-- `192.168.1.200`
+**Immich stack:**
+- `http://192.168.1.200:2283` — Immich
 
-Examples:
+### Remote access via Tailscale
 
-- `http://192.168.1.200:8080`
-- `http://192.168.1.200:9696`
-- `http://192.168.1.200:7878`
-- `http://192.168.1.200:8989`
-- `http://192.168.1.200:8686`
-- `http://192.168.1.200:6767`
-- `http://192.168.1.200:8096`
-- `http://192.168.1.200:8384`
+Once Tailscale is installed and running, access services from external devices using the `100.x.x.x` IP:
+
+- `http://100.x.x.x:8096` — Jellyfin
+- `http://100.x.x.x:5055` — Jellyseerr
+- `http://100.x.x.x:2283` — Immich
+- `http://100.x.x.x:8080` — qBittorrent
 
 ---
 
@@ -634,6 +693,38 @@ Application-level:
 
 ---
 
+## Remote access (Tailscale)
+
+Tailscale is installed as a system package (not Docker) on the Debian host for secure remote access.
+
+Install and configure:
+
+```bash
+sudo apt install tailscale
+sudo tailscale up
+# Follow the URL to authenticate
+```
+
+Verify the Tailscale IP:
+
+```bash
+tailscale status
+# Look for the 100.x.x.x IP assigned to arr-server
+```
+
+Access key services remotely:
+
+| Service | URL | Use case |
+|---|---|---|
+| Jellyfin | `http://100.x.x.x:8096` | Stream media remotely |
+| Jellyseerr | `http://100.x.x.x:5055` | Request media remotely |
+| Immich | `http://100.x.x.x:2283` | Access family photos remotely |
+| qBittorrent | `http://100.x.x.x:8080` | Monitor downloads remotely |
+
+For full details, see [tailscale-guide.md](./tailscale-guide.md).
+
+---
+
 ## Possible future improvements
 
-- Tailscale for remote access (see [tailscale-guide.md](./tailscale-guide.md))
+- GPU passthrough for hardware transcoding (see [docs/gpu-passthrough-guide.md](./docs/gpu-passthrough-guide.md))

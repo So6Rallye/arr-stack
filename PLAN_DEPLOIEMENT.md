@@ -123,15 +123,19 @@ Exécuter les phases dans l'ordre. Aucune action destructive sans audit préalab
 - [ ] Cloner ou copier le repo sur la VM
 - [ ] Créer .env : `cp .env.example .env`
 - [ ] Remplir .env avec valeurs réelles (PUID, PGID via `id`, SERVER_IP=192.168.1.200, etc.)
+- [ ] Créer les dossiers Immich photos : `sudo mkdir -p /data/photos/{library,upload}`
+  > Note: `install.sh` crée ces répertoires automatiquement s'il est fourni
 
 ---
 
 ## Phase 5 — Déploiement stack Docker (AGENT)
-- [ ] `docker compose config` — valider la config
+- [ ] `docker compose config` — valider la config (ARR stack)
+- [ ] `docker compose -f docker-compose.immich.yml config` — valider la config (Immich stack)
 - [ ] Vérifier ports libres : `ss -tlnp`
-- [ ] `make up` — lancer la stack
-- [ ] `make ps` — tous les conteneurs Up ?
-- [ ] `make logs` — erreurs critiques ?
+- [ ] `make up` — lancer les deux stacks (ARR + Immich)
+- [ ] `sudo docker compose ps` — tous les conteneurs ARR Up ?
+- [ ] `sudo docker compose -f docker-compose.immich.yml ps` — tous les conteneurs Immich Up ?
+- [ ] `make logs-arr` et `make logs-immich` — erreurs critiques ?
 
 ---
 
@@ -160,6 +164,26 @@ Exécuter les phases dans l'ordre. Aucune action destructive sans audit préalab
 ## Phase 7 — Configuration et validation services (AGENT)
 
 > Guide détaillé par service : `CONFIG-SERVICES.md` (racine du projet)
+
+### Ordre de configuration recommandé
+0. Gluetun (vérification VPN)
+1. qBittorrent
+2. Prowlarr
+3. Radarr
+4. Sonarr
+5. Lidarr
+6. Bazarr
+7. Jellyfin
+8. Syncthing
+9. FlareSolverr
+10. Jellyseerr
+11. Immich
+12. Tailscale
+
+### 0. Gluetun — Vérification VPN
+- [ ] `docker exec gluetun curl -s ifconfig.me` → doit retourner une IP ProtonVPN (pas 192.168.x.x)
+- [ ] `docker exec qbittorrent curl -s ifconfig.me` → même IP que Gluetun
+  > Si l'une ou l'autre échoue, vérifier `WIREGUARD_PRIVATE_KEY` dans `.env`
 
 ### qBittorrent (8080)
 - [ ] `docker logs qbittorrent` — récupérer le mot de passe temporaire
@@ -211,12 +235,43 @@ Exécuter les phases dans l'ordre. Aucune action destructive sans audit préalab
 - [ ] Définir user/password (Settings → GUI)
 - [ ] Ajouter dossiers `/data/personal/*` + lier aux appareils
 
+### 9. FlareSolverr — Configuration via Prowlarr
+- [ ] Dans Prowlarr : `Settings → Indexers → + (Indexer Proxies)`
+- [ ] Name: `FlareSolverr`, Host: `http://flaresolverr:8191`, Tags: `cloudflare`
+- [ ] Test → ✅ → Save
+- [ ] Appliquer le tag `cloudflare` aux indexeurs bloqués par Cloudflare
+
+### 10. Jellyseerr (5055) — Demandes media
+- [ ] Premier accès : `http://192.168.1.200:5055`
+- [ ] Sign In with Jellyfin
+- [ ] Jellyfin URL: `http://jellyfin:8096`, user/password: admin Jellyfin
+- [ ] Import users depuis Jellyfin
+- [ ] Configurer notifications optionnelles (Email/Discord)
+
+### 11. Immich (2283) — Photos famille
+- [ ] Premier accès : `http://192.168.1.200:2283`
+- [ ] Créer compte admin (email + mot de passe)
+- [ ] `Administration → Users → Create User` → comptes parent + enfant
+  > Max 3 utilisateurs (admin + parent + enfant)
+- [ ] `Administration → Machine Learning` → Facial Recognition: Enabled ✅
+- [ ] Lancer face detection : `Jobs → Face Detection → All`
+- [ ] Configurer app mobile : scanner QR code depuis Settings → Account
+
 ### Samba
 - [ ] Partages accessibles depuis LAN : `\\192.168.1.200\personal` et `\\192.168.1.200\media`
 
+### 12. Tailscale — Accès distant
+- [ ] `sudo apt install tailscale`
+- [ ] `sudo tailscale up` → suivre le lien d'authentification
+- [ ] `tailscale status` → noter l'IP 100.x.x.x assignée
+- [ ] Vérifier accès distance : `http://100.x.x.x:8096` (Jellyfin), etc.
+- [ ] Voir `tailscale-guide.md` pour détails
+
 ### Vérifications finales
 - [ ] DNS conteneurs : `docker exec -it radarr cat /etc/resolv.conf` → doit afficher 1.1.1.1
+- [ ] Gluetun VPN : `docker exec gluetun curl -s ifconfig.me` → IP ProtonVPN (pas 192.168.x.x)
 - [ ] Hardlinks : comparer inodes `ls -i /data/media/movies/<film>` vs `ls -i /data/torrents/movies/<film>` — doivent être identiques
+- [ ] Immich : face recognition activée et scan initial lancé
 - [ ] Backup applicatif — `./backup-arr-stack.sh /tmp/test-backup` + vérifier sortie
 - [ ] Backup VM — vérifier snapshot/backup Proxmox configuré (Datacenter → Backup, voir `docs/proxmox-backup-guide.md`)
 

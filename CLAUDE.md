@@ -19,6 +19,7 @@ Projet E-MOTION / So'6 Rallye — déployé comme VM Debian 12 sur Proxmox VE (`
 | Prowlarr | Docker (hotio/prowlarr) | 9696 | Indexeurs centralisés |
 | qBittorrent | Docker (hotio/qbittorrent) | 8080 | Téléchargements torrent |
 | Jellyfin | Docker (hotio/jellyfin) | 8096 | Serveur media |
+| Navidrome | Docker (deluan/navidrome) | 4533 | Serveur musique Subsonic — clients mobiles famille |
 | Syncthing | Docker (syncthing/syncthing) | 8384 | Sync fichiers personnels |
 | Samba | Host (apt) | 445 | Partages SMB LAN |
 

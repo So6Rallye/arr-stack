@@ -9,6 +9,7 @@ Communication inter-conteneurs via **noms Docker** (pas les IPs).
 
 ## Ordre de configuration recommandé
 
+0. Gluetun (vérification VPN)
 1. qBittorrent (catégories d'abord — critique)
 2. Prowlarr (indexeurs + download client)
 3. Radarr
@@ -17,6 +18,29 @@ Communication inter-conteneurs via **noms Docker** (pas les IPs).
 6. Bazarr
 7. Jellyfin
 8. Syncthing
+9. FlareSolverr (proxy Prowlarr)
+10. Jellyseerr (demandes media)
+11. Immich (photos famille)
+12. Tailscale (accès distant)
+13. Navidrome (serveur musique)
+
+---
+
+## 0. Gluetun — Vérification VPN
+
+### Vérifier que le VPN est actif
+```bash
+docker exec gluetun curl -s ifconfig.me
+# → doit retourner une IP ProtonVPN, PAS l'IP Freebox (192.168.x.x)
+```
+
+### Vérifier que qBittorrent passe par le VPN
+```bash
+docker exec qbittorrent curl -s ifconfig.me
+# → même IP que Gluetun
+```
+
+Si l'une ou l'autre commande échoue ou retourne l'IP locale : vérifier `WIREGUARD_PRIVATE_KEY` dans `.env`.
 
 ---
 
@@ -280,6 +304,103 @@ La procédure complète pour activer le passthrough GPU NVIDIA (GTX 1060 / NVENC
 
 ---
 
+## 9. FlareSolverr — `http://192.168.1.200:9696` (via Prowlarr)
+
+FlareSolverr n'a pas d'interface propre. Il se configure dans Prowlarr.
+
+### Ajouter FlareSolverr comme proxy dans Prowlarr
+`Settings → Indexers → + (Indexer Proxies)` → FlareSolverr :
+
+| Champ | Valeur |
+|---|---|
+| Name | FlareSolverr |
+| Host | `http://flaresolverr:8191` |
+| Tags | `cloudflare` |
+
+Test → ✅ → Save.
+
+### Appliquer aux indexeurs Cloudflare
+Pour chaque indexeur bloqué par Cloudflare, dans Prowlarr :
+- Ouvrir l'indexeur → Tags → ajouter `cloudflare`
+
+---
+
+## 10. Jellyseerr — `http://192.168.1.200:5055`
+
+### Premier accès
+Assistant de configuration : cliquer **"Sign In with Jellyfin"**.
+
+### Connexion Jellyfin
+| Champ | Valeur |
+|---|---|
+| Jellyfin URL | `http://jellyfin:8096` |
+| Utilisateur | compte admin Jellyfin |
+| Mot de passe | *(mot de passe admin Jellyfin)* |
+
+Se connecter → autoriser → Save.
+
+### Importer les utilisateurs Jellyfin
+`Settings → Users → Import Jellyfin Users` → importer tous les utilisateurs.
+
+### Activer les notifications (optionnel)
+`Settings → Notifications → Email ou Discord` selon préférence.
+
+---
+
+## 11. Immich — `http://192.168.1.200:2283`
+
+### Premier accès
+Créer le **compte administrateur** au premier accès (email + mot de passe).
+
+### Créer les comptes famille
+`Administration → Users → Create User` :
+- Compte parent : email + mot de passe + quota stockage si souhaité
+- Compte enfant : email + mot de passe + quota stockage si souhaité
+
+> Maximum 3 utilisateurs sur cette installation (admin + parent + enfant).
+
+### Activer la reconnaissance faciale
+`Administration → Machine Learning` :
+- Facial Recognition → **Enabled** ✅
+- CLIP (Smart Search) → **Enabled** ✅ (activé par défaut)
+- Lancer un scan initial : `Jobs → Face Detection → All`
+
+### App mobile
+1. Télécharger **Immich** (App Store / Play Store)
+2. Scanner le QR code depuis `http://192.168.1.200:2283` → Settings → Account → QR Code
+3. Activer la sauvegarde automatique dans l'app
+
+---
+
+## 12. Tailscale
+
+Voir guide complet : `tailscale-guide.md`
+
+### Installation rapide
+```bash
+sudo apt install tailscale
+sudo tailscale up
+# → ouvrir le lien affiché dans un navigateur pour authentifier
+```
+
+### Vérifier l'IP Tailscale
+```bash
+tailscale status
+# → IP 100.x.x.x assignée à arr-server
+```
+
+### Accès externe via Tailscale
+Depuis n'importe quel appareil avec Tailscale installé :
+
+| Service | URL |
+|---|---|
+| Jellyfin | `http://100.x.x.x:8096` |
+| Jellyseerr | `http://100.x.x.x:5055` |
+| Immich | `http://100.x.x.x:2283` |
+| qBittorrent | `http://100.x.x.x:8080` |
+
+---
+
 ## Vérifications finales
 
 ### DNS conteneurs
@@ -325,3 +446,38 @@ Puis dans Prowlarr :
 - Save
 
 Appliquer le tag `cloudflare` aux indexeurs concernés.
+
+---
+
+## 13. Navidrome — Serveur musique (Subsonic API)
+
+**URL :** `http://192.168.1.200:4533`
+
+### Premier boot — Compte admin
+
+1. Ouvrir `http://192.168.1.200:4533`
+2. Créer le compte admin (username + password) au premier lancement
+3. La bibliothèque `/data/media/music` (montée en `/music`) est scannée automatiquement au démarrage
+
+### Comptes famille
+
+`Settings → Users → Create User` pour chaque membre :
+- Choisir un username et mot de passe
+- Chaque compte a ses propres playlists, favoris et historique d'écoute
+- La bibliothèque musicale est commune (read-only partagé)
+
+### Clients mobiles (Subsonic API)
+
+| App | Plateforme | Téléchargement |
+|---|---|---|
+| **Ultrasonic** | Android (gratuit) | Play Store / F-Droid |
+| **DSub** | Android (gratuit) | Play Store |
+| **Amperfy** | iOS (gratuit) | App Store |
+
+Configuration dans l'app :
+- Server URL : `http://192.168.1.200:4533` (LAN) ou URL Tailscale
+- Username / Password : compte créé dans Navidrome
+
+### Accès distant via Tailscale
+
+`http://<tailscale-ip>:4533` — fonctionne depuis n'importe où sans config supplémentaire.
