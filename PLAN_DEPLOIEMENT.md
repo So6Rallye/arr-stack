@@ -178,7 +178,8 @@ Exécuter les phases dans l'ordre. Aucune action destructive sans audit préalab
 9. FlareSolverr
 10. Jellyseerr
 11. Immich
-12. Tailscale
+12. Navidrome
+13. Tailscale
 
 ### 0. Gluetun — Vérification VPN
 - [ ] `docker exec gluetun curl -s ifconfig.me` → doit retourner une IP ProtonVPN (pas 192.168.x.x)
@@ -260,7 +261,14 @@ Exécuter les phases dans l'ordre. Aucune action destructive sans audit préalab
 ### Samba
 - [ ] Partages accessibles depuis LAN : `\\192.168.1.200\personal` et `\\192.168.1.200\media`
 
-### 12. Tailscale — Accès distant
+### 12. Navidrome (4533) — Serveur musique
+- [ ] Premier accès : `http://192.168.1.200:4533`
+- [ ] Créer compte admin au premier boot (formulaire affiché automatiquement)
+- [ ] `Settings → Users` → créer comptes famille (un par membre)
+- [ ] Vérifier que la bibliothèque `/data/media/music` est scannée (onglet Library → Scan Library)
+- [ ] Clients mobiles gratuits : **Ultrasonic** (Android) / **Amperfy** (iOS) → serveur `http://192.168.1.200:4533`
+
+### 13. Tailscale — Accès distant
 - [ ] `sudo apt install tailscale`
 - [ ] `sudo tailscale up` → suivre le lien d'authentification
 - [ ] `tailscale status` → noter l'IP 100.x.x.x assignée

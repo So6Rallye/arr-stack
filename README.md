@@ -14,6 +14,7 @@ Simple and reliable Docker stack for a Debian or Ubuntu home server with:
 - qBittorrent
 - Jellyfin
 - Jellyseerr
+- Navidrome
 - Syncthing
 - Immich
 
@@ -26,6 +27,7 @@ This version is tailored for a personal home server focused on:
 - media request management via Jellyseerr
 - Jellyfin media library
 - family photo management with Immich
+- mobile music streaming with Navidrome (Subsonic API)
 - phone and PC file sync with Syncthing
 - SMB/Samba shares on the host
 - remote access via Tailscale (100.x.x.x)
@@ -73,6 +75,7 @@ The stack uses **2 docker-compose files**:
 - **FlareSolverr** — Cloudflare bypass proxy (routed via VPN)
 - **Jellyfin** — media server
 - **Jellyseerr** — media request manager
+- **Navidrome** — music server (Subsonic API — mobile clients)
 - **Syncthing** — personal file sync
 
 ### Immich stack services (docker-compose.immich.yml)
@@ -184,6 +187,7 @@ That is what allows hardlinks to work correctly between downloads and final libr
   prowlarr/
   qbittorrent/
   jellyfin/
+  navidrome/
   syncthing/
 
 /data/
@@ -221,9 +225,10 @@ That is what allows hardlinks to work correctly between downloads and final libr
 12. Configure Jellyseerr for media requests
 13. Add Jellyfin libraries
 14. Configure Immich for family photos
-15. Configure Syncthing for personal files
-16. Configure Samba on the host if you want SMB shares
-17. Install Tailscale for remote access
+15. Configure Navidrome for family music (create admin + family accounts)
+16. Configure Syncthing for personal files
+17. Configure Samba on the host if you want SMB shares
+18. Install Tailscale for remote access
 
 ---
 
@@ -282,6 +287,7 @@ make down-immich   # Immich stack only
 - FlareSolverr: `http://localhost:8191` (via Prowlarr only, no standalone UI)
 - Jellyfin: `http://localhost:8096`
 - Jellyseerr: `http://localhost:5055`
+- Navidrome: `http://localhost:4533`
 - Syncthing: `http://localhost:8384`
 
 **Immich stack:**
@@ -300,6 +306,7 @@ Replace `192.168.1.200` with your server IP (recommended value for this project)
 - `http://192.168.1.200:6767` — Bazarr
 - `http://192.168.1.200:8096` — Jellyfin
 - `http://192.168.1.200:5055` — Jellyseerr
+- `http://192.168.1.200:4533` — Navidrome
 - `http://192.168.1.200:8384` — Syncthing
 
 **Immich stack:**
@@ -312,6 +319,7 @@ Once Tailscale is installed and running, access services from external devices u
 - `http://100.x.x.x:8096` — Jellyfin
 - `http://100.x.x.x:5055` — Jellyseerr
 - `http://100.x.x.x:2283` — Immich
+- `http://100.x.x.x:4533` — Navidrome
 - `http://100.x.x.x:8080` — qBittorrent
 
 ---
@@ -513,6 +521,29 @@ Typical use cases:
 
 ---
 
+## Navidrome
+
+URL:
+
+`http://192.168.1.200:4533`
+
+Navidrome is a self-hosted music server exposing the Subsonic API. It reads the same `/data/media/music` folder as Jellyfin (mounted read-only) — Lidarr writes, Navidrome only reads.
+
+**First boot:** create the admin account when you first open the UI.
+
+**Family accounts:** Settings → Users → create one account per family member. Each has independent playlists, favorites, and listening history on the shared music library.
+
+**Free mobile clients:**
+
+| App | Platform |
+|---|---|
+| Ultrasonic | Android (F-Droid + Play Store) |
+| Amperfy | iOS (App Store) |
+
+Connect with: server `http://192.168.1.200:4533` (LAN) or `http://100.x.x.x:4533` (Tailscale) + your Navidrome credentials.
+
+---
+
 ## SMB / Samba
 
 Samba is **not** run in Docker in this setup.
@@ -686,6 +717,7 @@ Application-level:
 - `TZ` is set to `Europe/Paris`
 - qBittorrent explicitly keeps `PUID`, `PGID` and `TZ`
 - Syncthing is included for personal files and phone sync
+- Navidrome serves `/data/media/music` read-only via Subsonic API — free clients: Ultrasonic (Android), Amperfy (iOS)
 - Jellyfin uses direct-play by default (no GPU transcode). See the [GPU Passthrough Guide](./docs/gpu-passthrough-guide.md) for the future NVIDIA NVENC option.
 - `/data/personal` is included in the folder structure
 - fixed LAN IP recommended for this project: `192.168.1.200`
@@ -719,6 +751,7 @@ Access key services remotely:
 | Jellyfin | `http://100.x.x.x:8096` | Stream media remotely |
 | Jellyseerr | `http://100.x.x.x:5055` | Request media remotely |
 | Immich | `http://100.x.x.x:2283` | Access family photos remotely |
+| Navidrome | `http://100.x.x.x:4533` | Stream music remotely (Subsonic API) |
 | qBittorrent | `http://100.x.x.x:8080` | Monitor downloads remotely |
 
 For full details, see [tailscale-guide.md](./tailscale-guide.md).

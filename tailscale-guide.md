@@ -53,6 +53,7 @@ Une fois Tailscale activé, tous les services sont accessibles à distance via l
 | Jellyfin | 8096 | http://100.x.x.x:8096 |
 | Jellyseerr | 5055 | http://100.x.x.x:5055 |
 | Immich | 2283 | http://100.x.x.x:2283 |
+| Navidrome | 4533 | http://100.x.x.x:4533 |
 | qBittorrent | 8080 | http://100.x.x.x:8080 |
 | Syncthing | 8384 | http://100.x.x.x:8384 |
 
