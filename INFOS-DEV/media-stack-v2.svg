@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 2000" width="1600" height="2000" font-family="Verdana, Geneva, Tahoma, sans-serif">
+<defs>
+  <radialGradient id="bgGrad" cx="50%" cy="30%" r="90%">
+    <stop offset="0%" stop-color="#1a1f3a"/>
+    <stop offset="60%" stop-color="#0d1125"/>
+    <stop offset="100%" stop-color="#050714"/>
+  </radialGradient>
+  <linearGradient id="titleBar" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#8b7cf6"/>
+    <stop offset="25%" stop-color="#38bdf8"/>
+    <stop offset="50%" stop-color="#f97316"/>
+    <stop offset="75%" stop-color="#22d3ee"/>
+    <stop offset="100%" stop-color="#ec4899"/>
+  </linearGradient>
+  <filter id="cardGlow" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur stdDeviation="4" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+</defs>
+
+<!-- ================ FOND ================ -->
+<rect width="1600" height="2000" fill="url(#bgGrad)"/>
+
+<!-- Étoiles -->
+<g fill="#fff" opacity="0.6">
+  <circle cx="80" cy="120" r="1"/><circle cx="240" cy="80" r="0.8"/><circle cx="420" cy="60" r="1.2"/>
+  <circle cx="780" cy="70" r="1"/><circle cx="1140" cy="90" r="1.1"/><circle cx="1480" cy="110" r="1"/>
+  <circle cx="150" cy="300" r="0.8"/><circle cx="1450" cy="380" r="1"/><circle cx="1530" cy="600" r="0.7"/>
+  <circle cx="80" cy="750" r="1"/><circle cx="1550" cy="900" r="0.9"/><circle cx="60" cy="1100" r="0.8"/>
+  <circle cx="1480" cy="1250" r="1"/><circle cx="120" cy="1450" r="0.7"/><circle cx="1520" cy="1650" r="1"/>
+  <circle cx="50" cy="1800" r="0.8"/><circle cx="1460" cy="1900" r="0.9"/>
+</g>
+<g fill="#fff" opacity="0.25">
+  <circle cx="320" cy="180" r="0.5"/><circle cx="520" cy="220" r="0.5"/><circle cx="880" cy="180" r="0.5"/>
+  <circle cx="1280" cy="180" r="0.5"/><circle cx="200" cy="500" r="0.5"/><circle cx="1400" cy="800" r="0.5"/>
+  <circle cx="130" cy="1200" r="0.5"/><circle cx="1500" cy="1500" r="0.5"/>
+</g>
+
+<!-- ================ TITRE ================ -->
+<text x="800" y="85" text-anchor="middle" fill="#fff" font-size="42" font-weight="700" letter-spacing="-1">Media Stack</text>
+<text x="800" y="125" text-anchor="middle" fill="#9ca3bf" font-size="16" font-weight="400" letter-spacing="3">ARCHITECTURE SELF-HOSTED · 14 SERVICES · 6 COUCHES</text>
+<rect x="550" y="145" width="500" height="3" fill="url(#titleBar)" rx="1.5"/>
+
+<!-- ================ CONNECTEURS (dessinés AVANT les cartes, pour être en arrière) ================ -->
+
+<!-- N1 Proton -> N2 Gluetun : ligne verticale centrale -->
+<line x1="800" y1="290" x2="800" y2="370" stroke="#8b7cf6" stroke-width="3" opacity="0.8"/>
+
+<!-- N2 Gluetun -> N3 Prowlarr + FlareSolverr : descente puis bifurcation en T -->
+<line x1="800" y1="490" x2="800" y2="560" stroke="#38bdf8" stroke-width="2.5" opacity="0.7"/>
+<line x1="420" y1="560" x2="1180" y2="560" stroke="#38bdf8" stroke-width="2" opacity="0.6"/>
+<line x1="420" y1="560" x2="420" y2="640" stroke="#38bdf8" stroke-width="2" opacity="0.7"/>
+<line x1="1180" y1="560" x2="1180" y2="640" stroke="#38bdf8" stroke-width="2" opacity="0.7"/>
+
+<!-- N3 Prowlarr -> N4 *arr : descente puis distribution aux 4 cartes -->
+<line x1="420" y1="760" x2="420" y2="830" stroke="#f97316" stroke-width="2" opacity="0.6"/>
+<line x1="230" y1="830" x2="1380" y2="830" stroke="#f97316" stroke-width="2" opacity="0.5"/>
+<line x1="230" y1="830" x2="230" y2="890" stroke="#f97316" stroke-width="2" opacity="0.6"/>
+<line x1="610" y1="830" x2="610" y2="890" stroke="#f97316" stroke-width="2" opacity="0.6"/>
+<line x1="990" y1="830" x2="990" y2="890" stroke="#f97316" stroke-width="2" opacity="0.6"/>
+<line x1="1380" y1="830" x2="1380" y2="890" stroke="#f97316" stroke-width="2" opacity="0.6"/>
+
+<!-- N4 *arr -> N5 qBittorrent : convergence en Y -->
+<line x1="230" y1="1010" x2="230" y2="1090" stroke="#eab308" stroke-width="2" opacity="0.5"/>
+<line x1="610" y1="1010" x2="610" y2="1090" stroke="#eab308" stroke-width="2" opacity="0.5"/>
+<line x1="990" y1="1010" x2="990" y2="1090" stroke="#eab308" stroke-width="2" opacity="0.5"/>
+<line x1="1380" y1="1010" x2="1380" y2="1090" stroke="#eab308" stroke-width="2" opacity="0.5"/>
+<line x1="230" y1="1090" x2="1380" y2="1090" stroke="#eab308" stroke-width="2" opacity="0.5"/>
+<line x1="800" y1="1090" x2="800" y2="1150" stroke="#eab308" stroke-width="2.5" opacity="0.7"/>
+
+<!-- Gluetun -> qBittorrent (tunnel VPN latéral, pointillés) -->
+<path d="M 940 430 Q 1450 430 1450 1200 Q 1450 1200 1010 1200" stroke="#8b7cf6" stroke-width="2" fill="none" opacity="0.45" stroke-dasharray="8 5"/>
+<text x="1470" y="800" fill="#a78bfa" font-size="13" letter-spacing="1" opacity="0.7">tunnel VPN</text>
+
+<!-- N5 qBittorrent -> Stockage -->
+<line x1="800" y1="1270" x2="800" y2="1340" stroke="#eab308" stroke-width="2" opacity="0.6"/>
+
+<!-- Stockage -> N6 Jellyfin/Jellyseerr/Navidrome (distribution en T) -->
+<line x1="800" y1="1420" x2="800" y2="1480" stroke="#22d3ee" stroke-width="2" opacity="0.6"/>
+<line x1="280" y1="1480" x2="1320" y2="1480" stroke="#22d3ee" stroke-width="2" opacity="0.5"/>
+<line x1="280" y1="1480" x2="280" y2="1540" stroke="#22d3ee" stroke-width="2" opacity="0.6"/>
+<line x1="800" y1="1480" x2="800" y2="1540" stroke="#22d3ee" stroke-width="2" opacity="0.6"/>
+<line x1="1320" y1="1480" x2="1320" y2="1540" stroke="#22d3ee" stroke-width="2" opacity="0.6"/>
+
+<!-- Feedback Jellyseerr -> Radarr/Sonarr (courbe pointillée, contournant par la gauche) -->
+<path d="M 680 1600 Q 80 1600 80 940 Q 80 940 230 940" stroke="#22d3ee" stroke-width="1.5" fill="none" opacity="0.4" stroke-dasharray="5 4"/>
+<path d="M 680 1600 Q 80 1600 80 940 Q 80 940 610 940" stroke="#22d3ee" stroke-width="1.5" fill="none" opacity="0.4" stroke-dasharray="5 4"/>
+<text x="100" y="1280" fill="#67e8f9" font-size="12" letter-spacing="1" opacity="0.7">feedback</text>
+<text x="100" y="1298" fill="#67e8f9" font-size="12" letter-spacing="1" opacity="0.7">Jellyseerr</text>
+
+<!-- ================ N1 : PROTON VPN ================ -->
+<g filter="url(#cardGlow)">
+  <rect x="620" y="210" width="360" height="80" rx="40" fill="#1a1f3a" stroke="#8b7cf6" stroke-width="2"/>
+</g>
+<g transform="translate(655, 235)">
+  <path d="M 25 0 L 45 8 V 24 C 45 36 37 46 25 50 C 13 46 5 36 5 24 V 8 Z" fill="#6D4AFF"/>
+  <path d="M 18 14 H 27 C 30 14 32 17 32 20 C 32 23 30 26 27 26 H 22 V 36 H 18 Z M 22 18 V 22 H 26 C 27 22 28 21 28 20 C 28 19 27 18 26 18 Z" fill="#fff"/>
+</g>
+<text x="730" y="258" fill="#fff" font-size="24" font-weight="600">Proton VPN</text>
+<text x="730" y="282" fill="#c4c2ff" font-size="14">Tunnel WireGuard · sans logs</text>
+<text x="595" y="258" text-anchor="end" fill="#8b7cf6" font-size="13" font-weight="500" letter-spacing="2">N1 · RÉSEAU</text>
+
+<!-- ================ N2 : GLUETUN ================ -->
+<g filter="url(#cardGlow)">
+  <rect x="620" y="370" width="360" height="80" rx="40" fill="#1a1f3a" stroke="#8b7cf6" stroke-width="2"/>
+</g>
+<g transform="translate(655, 395)">
+  <circle cx="25" cy="25" r="24" fill="#4FC3F7"/>
+  <path d="M 25 8 C 18 16 13 21 13 28 C 13 35 18 40 25 40 C 32 40 37 35 37 28 C 37 21 32 16 25 8 Z" fill="#fff"/>
+  <circle cx="25" cy="29" r="5" fill="#1976D2"/>
+</g>
+<text x="730" y="418" fill="#fff" font-size="24" font-weight="600">Gluetun</text>
+<text x="730" y="442" fill="#c4c2ff" font-size="14">Conteneur VPN · kill-switch</text>
+<text x="595" y="418" text-anchor="end" fill="#8b7cf6" font-size="13" font-weight="500" letter-spacing="2">N2 · TUNNEL</text>
+
+<!-- ================ N3 : INDEXATION (Prowlarr + FlareSolverr) ================ -->
+<!-- Prowlarr -->
+<g filter="url(#cardGlow)">
+  <rect x="240" y="640" width="360" height="80" rx="40" fill="#1a1f3a" stroke="#38bdf8" stroke-width="2"/>
+</g>
+<g transform="translate(275, 665)">
+  <circle cx="25" cy="25" r="24" fill="#313131"/>
+  <circle cx="21" cy="21" r="10" fill="none" stroke="#E67E22" stroke-width="3"/>
+  <line x1="28" y1="28" x2="36" y2="36" stroke="#E67E22" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="21" cy="21" r="3" fill="#E67E22"/>
+</g>
+<text x="350" y="688" fill="#fff" font-size="24" font-weight="600">Prowlarr</text>
+<text x="350" y="712" fill="#b8e5ff" font-size="14">Gestion des indexeurs</text>
+
+<!-- FlareSolverr -->
+<g filter="url(#cardGlow)">
+  <rect x="1000" y="640" width="360" height="80" rx="40" fill="#1a1f3a" stroke="#38bdf8" stroke-width="2"/>
+</g>
+<g transform="translate(1035, 665)">
+  <circle cx="25" cy="25" r="24" fill="#1f2937"/>
+  <path d="M 25 8 C 25 17 18 21 18 30 C 18 37 21 42 25 42 C 29 42 32 37 32 30 C 32 25 29 23 29 17 C 29 13 27 11 25 8 Z" fill="#F57C00"/>
+  <path d="M 25 20 C 25 24 21 26 21 31 C 21 34 23 36 25 36 C 27 36 29 34 29 31 C 29 27 27 26 25 20 Z" fill="#FFEB3B"/>
+</g>
+<text x="1110" y="688" fill="#fff" font-size="24" font-weight="600">FlareSolverr</text>
+<text x="1110" y="712" fill="#b8e5ff" font-size="14">Bypass Cloudflare</text>
+
+<text x="215" y="688" text-anchor="end" fill="#38bdf8" font-size="13" font-weight="500" letter-spacing="2">N3 · INDEXATION</text>
+
+<!-- ================ N4 : *ARR (4 cartes alignées) ================ -->
+<!-- Radarr -->
+<g filter="url(#cardGlow)">
+  <rect x="100" y="890" width="260" height="120" rx="16" fill="#1a1f3a" stroke="#f97316" stroke-width="2"/>
+</g>
+<g transform="translate(125, 920)">
+  <circle cx="25" cy="25" r="24" fill="#FFC230"/>
+  <circle cx="25" cy="25" r="17" fill="none" stroke="#2E2E2E" stroke-width="2.5"/>
+  <path d="M 19 15 L 35 25 L 19 35 Z" fill="#2E2E2E"/>
+</g>
+<text x="190" y="932" fill="#fff" font-size="22" font-weight="600">Radarr</text>
+<text x="190" y="958" fill="#ffd4a8" font-size="14">Films</text>
+<text x="125" y="990" fill="#ffd4a8" font-size="11" opacity="0.6">radarr.video</text>
+
+<!-- Sonarr -->
+<g filter="url(#cardGlow)">
+  <rect x="480" y="890" width="260" height="120" rx="16" fill="#1a1f3a" stroke="#f97316" stroke-width="2"/>
+</g>
+<g transform="translate(505, 920)">
+  <circle cx="25" cy="25" r="24" fill="#35C5F0"/>
+  <circle cx="25" cy="25" r="16" fill="none" stroke="#fff" stroke-width="2.5"/>
+  <path d="M 25 12 L 25 17 M 25 33 L 25 38 M 12 25 L 17 25 M 33 25 L 38 25" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="25" cy="25" r="4" fill="#fff"/>
+</g>
+<text x="570" y="932" fill="#fff" font-size="22" font-weight="600">Sonarr</text>
+<text x="570" y="958" fill="#ffd4a8" font-size="14">Séries TV</text>
+<text x="505" y="990" fill="#ffd4a8" font-size="11" opacity="0.6">sonarr.tv</text>
+
+<!-- Lidarr -->
+<g filter="url(#cardGlow)">
+  <rect x="860" y="890" width="260" height="120" rx="16" fill="#1a1f3a" stroke="#f97316" stroke-width="2"/>
+</g>
+<g transform="translate(885, 920)">
+  <circle cx="25" cy="25" r="24" fill="#159552"/>
+  <path d="M 20 15 L 20 32 M 20 15 L 33 12 L 33 29" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <circle cx="18" cy="33" r="3" fill="#fff"/>
+  <circle cx="31" cy="31" r="3" fill="#fff"/>
+</g>
+<text x="950" y="932" fill="#fff" font-size="22" font-weight="600">Lidarr</text>
+<text x="950" y="958" fill="#ffd4a8" font-size="14">Musique</text>
+<text x="885" y="990" fill="#ffd4a8" font-size="11" opacity="0.6">lidarr.audio</text>
+
+<!-- Bazarr -->
+<g filter="url(#cardGlow)">
+  <rect x="1250" y="890" width="260" height="120" rx="16" fill="#1a1f3a" stroke="#f97316" stroke-width="2"/>
+</g>
+<g transform="translate(1275, 920)">
+  <circle cx="25" cy="25" r="24" fill="#6DBC50"/>
+  <path d="M 12 18 C 12 14 14 12 18 12 L 32 12 C 36 12 38 14 38 18 L 38 27 C 38 31 36 33 32 33 L 22 33 L 17 38 L 18 33 C 14 33 12 31 12 27 Z" fill="#fff"/>
+  <rect x="17" y="19" width="16" height="1.5" fill="#6DBC50"/>
+  <rect x="17" y="23" width="12" height="1.5" fill="#6DBC50"/>
+  <rect x="17" y="27" width="14" height="1.5" fill="#6DBC50"/>
+</g>
+<text x="1340" y="932" fill="#fff" font-size="22" font-weight="600">Bazarr</text>
+<text x="1340" y="958" fill="#ffd4a8" font-size="14">Sous-titres</text>
+<text x="1275" y="990" fill="#ffd4a8" font-size="11" opacity="0.6">bazarr.media</text>
+
+<text x="800" y="870" text-anchor="middle" fill="#f97316" font-size="13" font-weight="500" letter-spacing="2">N4 · APPLICATIONS *ARR</text>
+
+<!-- ================ N5 : QBITTORRENT ================ -->
+<g filter="url(#cardGlow)">
+  <rect x="620" y="1150" width="360" height="120" rx="20" fill="#1a1f3a" stroke="#eab308" stroke-width="2"/>
+</g>
+<g transform="translate(655, 1180)">
+  <circle cx="25" cy="25" r="24" fill="#2F6FB1"/>
+  <text x="25" y="32" text-anchor="middle" fill="#fff" font-size="18" font-weight="700" font-family="-apple-system, sans-serif">qb</text>
+</g>
+<text x="730" y="1195" fill="#fff" font-size="24" font-weight="600">qBittorrent</text>
+<text x="730" y="1221" fill="#fde68a" font-size="14">Client BitTorrent</text>
+<text x="730" y="1250" fill="#fde68a" font-size="12" opacity="0.7">Tout le trafic transite par Gluetun</text>
+
+<text x="595" y="1205" text-anchor="end" fill="#eab308" font-size="13" font-weight="500" letter-spacing="2">N5 · DOWNLOAD</text>
+
+<!-- ================ STOCKAGE (intermédiaire) ================ -->
+<g>
+  <rect x="620" y="1340" width="360" height="70" rx="14" fill="none" stroke="#4b5563" stroke-width="1.5" stroke-dasharray="6 4"/>
+</g>
+<text x="800" y="1370" text-anchor="middle" fill="#9ca3bf" font-size="16" font-weight="500">💾  Stockage local</text>
+<text x="800" y="1392" text-anchor="middle" fill="#6b7280" font-size="12">/media/films · séries · musique</text>
+
+<!-- ================ N6 : DIFFUSION (Jellyfin + Jellyseerr + Navidrome) ================ -->
+<!-- Jellyfin -->
+<g filter="url(#cardGlow)">
+  <rect x="100" y="1540" width="360" height="120" rx="20" fill="#1a1f3a" stroke="#22d3ee" stroke-width="2"/>
+</g>
+<g transform="translate(135, 1570)">
+  <path d="M 25 5 L 45 40 L 5 40 Z" fill="#AA5CC3" opacity="0.5"/>
+  <path d="M 25 15 L 40 38 L 10 38 Z" fill="#00A4DC"/>
+</g>
+<text x="210" y="1585" fill="#fff" font-size="24" font-weight="600">Jellyfin</text>
+<text x="210" y="1611" fill="#a5f3fc" font-size="14">Serveur de streaming</text>
+<text x="210" y="1635" fill="#a5f3fc" font-size="12" opacity="0.7">Films · séries · multi-plateformes</text>
+
+<!-- Jellyseerr -->
+<g filter="url(#cardGlow)">
+  <rect x="620" y="1540" width="360" height="120" rx="20" fill="#1a1f3a" stroke="#22d3ee" stroke-width="2"/>
+</g>
+<g transform="translate(655, 1570)">
+  <circle cx="25" cy="25" r="24" fill="#F39C12"/>
+  <path d="M 25 12 C 20 12 16 16 16 21 L 16 28 L 13 32 L 37 32 L 34 28 L 34 21 C 34 16 30 12 25 12 Z" fill="#fff"/>
+  <path d="M 21 34 C 21 37 23 38 25 38 C 27 38 29 37 29 34 Z" fill="#fff"/>
+</g>
+<text x="730" y="1585" fill="#fff" font-size="24" font-weight="600">Jellyseerr</text>
+<text x="730" y="1611" fill="#a5f3fc" font-size="14">Portail de demandes</text>
+<text x="730" y="1635" fill="#a5f3fc" font-size="12" opacity="0.7">Transmet aux *arr ↑</text>
+
+<!-- Navidrome -->
+<g filter="url(#cardGlow)">
+  <rect x="1140" y="1540" width="360" height="120" rx="20" fill="#1a1f3a" stroke="#22d3ee" stroke-width="2"/>
+</g>
+<g transform="translate(1175, 1570)">
+  <rect x="0" y="0" width="50" height="50" rx="10" fill="#2196F3"/>
+  <path d="M 20 14 L 36 12 L 36 34" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <line x1="20" y1="14" x2="20" y2="36" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+  <ellipse cx="17" cy="37" rx="5" ry="4" fill="#fff"/>
+  <ellipse cx="33" cy="35" rx="5" ry="4" fill="#fff"/>
+</g>
+<text x="1250" y="1585" fill="#fff" font-size="24" font-weight="600">Navidrome</text>
+<text x="1250" y="1611" fill="#a5f3fc" font-size="14">Serveur musical</text>
+<text x="1250" y="1635" fill="#a5f3fc" font-size="12" opacity="0.7">Compatible Subsonic API</text>
+
+<text x="800" y="1520" text-anchor="middle" fill="#22d3ee" font-size="13" font-weight="500" letter-spacing="2">N6 · DIFFUSION</text>
+
+<!-- ================ SÉPARATION N7 ================ -->
+<line x1="100" y1="1740" x2="1500" y2="1740" stroke="#3d4458" stroke-width="1" stroke-dasharray="8 6" opacity="0.6"/>
+<text x="800" y="1732" text-anchor="middle" fill="#6a7285" font-size="12" letter-spacing="4">COUCHE INDÉPENDANTE · DONNÉES PERSONNELLES</text>
+
+<!-- ================ N7 : PERSO (Syncthing + Immich) ================ -->
+<!-- Syncthing -->
+<g filter="url(#cardGlow)">
+  <rect x="300" y="1780" width="440" height="140" rx="20" fill="#1a1f3a" stroke="#ec4899" stroke-width="2"/>
+</g>
+<g transform="translate(335, 1820)">
+  <circle cx="30" cy="30" r="28" fill="#0891D1"/>
+  <path d="M 30 9 A 21 21 0 0 1 51 30 L 46 30 A 16 16 0 0 0 30 14 Z" fill="#fff"/>
+  <path d="M 30 51 A 21 21 0 0 1 9 30 L 14 30 A 16 16 0 0 0 30 46 Z" fill="#fff"/>
+  <path d="M 46 25 L 52 30 L 46 35 Z" fill="#fff"/>
+  <path d="M 14 35 L 8 30 L 14 25 Z" fill="#fff"/>
+  <circle cx="30" cy="30" r="5" fill="#fff"/>
+</g>
+<text x="420" y="1822" fill="#fff" font-size="26" font-weight="600" letter-spacing="1">Syncthing</text>
+<text x="420" y="1852" fill="#fbcfe8" font-size="15">Synchronisation P2P chiffrée</text>
+<text x="420" y="1878" fill="#fbcfe8" font-size="12" opacity="0.7">Entre appareils · aucun cloud tiers</text>
+
+<!-- Immich -->
+<g filter="url(#cardGlow)">
+  <rect x="860" y="1780" width="440" height="140" rx="20" fill="#1a1f3a" stroke="#ec4899" stroke-width="2"/>
+</g>
+<g transform="translate(895, 1820)">
+  <path d="M 30 30 C 30 14 35 10 50 10 C 50 24 45 28 30 30 Z" fill="#ED3F85"/>
+  <path d="M 30 30 C 46 30 50 34 50 50 C 36 50 32 45 30 30 Z" fill="#FFB02E"/>
+  <path d="M 30 30 C 30 46 25 50 10 50 C 10 36 15 32 30 30 Z" fill="#3BA55D"/>
+  <path d="M 30 30 C 14 30 10 25 10 10 C 24 10 28 15 30 30 Z" fill="#4F8EF7"/>
+  <circle cx="30" cy="30" r="5" fill="#1a1f3a"/>
+</g>
+<text x="980" y="1822" fill="#fff" font-size="26" font-weight="600">Immich</text>
+<text x="980" y="1852" fill="#fbcfe8" font-size="15">Alternative à Google Photos</text>
+<text x="980" y="1878" fill="#fbcfe8" font-size="12" opacity="0.7">Sauvegarde auto · IA · albums partagés</text>
+
+<text x="275" y="1855" text-anchor="end" fill="#ec4899" font-size="13" font-weight="500" letter-spacing="2">N7 · PERSO</text>
+
+<!-- ================ LÉGENDE BAS ================ -->
+<g transform="translate(100, 1970)">
+  <text x="0" y="0" fill="#6a7285" font-size="12" letter-spacing="2">FLUX :</text>
+  <line x1="70" y1="-4" x2="120" y2="-4" stroke="#8b7cf6" stroke-width="2.5"/>
+  <text x="128" y="0" fill="#9ca3bf" font-size="12">direct</text>
+  <line x1="200" y1="-4" x2="250" y2="-4" stroke="#8b7cf6" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="258" y="0" fill="#9ca3bf" font-size="12">tunnel VPN (Gluetun → qBittorrent)</text>
+  <line x1="520" y1="-4" x2="570" y2="-4" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="578" y="0" fill="#9ca3bf" font-size="12">feedback (Jellyseerr → *arr)</text>
+</g>
+<text x="1500" y="1970" text-anchor="end" fill="#6a7285" font-size="12" font-style="italic" letter-spacing="1">So'6 Rallye · 2026</text>
+
+</svg>

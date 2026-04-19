@@ -2,6 +2,8 @@
 
 # ARR Stack - Debian Home Server Edition
 
+![Media Stack Architecture](INFOS-DEV/media-stack-v2.svg)
+
 Simple and reliable Docker stack for a Debian or Ubuntu home server with:
 
 - Gluetun (ProtonVPN WireGuard)
