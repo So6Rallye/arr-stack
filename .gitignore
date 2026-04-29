@@ -5,3 +5,6 @@ SESSION_SUMMARY.md
 dist/
 .DS_Store
 CREDENTIALS.md
+
+# Claude Code — état de compaction (éphémère, local uniquement)
+.claude/state/

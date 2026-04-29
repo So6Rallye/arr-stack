@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const c = process.env.TOOL_INPUT_COMMAND || ''; const isDestructive = /rm\\s+-rf|docker\\s+volume\\s+prune|docker\\s+system\\s+prune|docker[- ]compose\\s+down\\s+-v|rsync\\s+--delete|dd\\s+if=|mkfs/.test(c); if (isDestructive) { console.log(JSON.stringify({hookSpecificOutput:{additionalContext:'🔴 Opération destructive détectée — invoquer arr-destructive-gate (Opus) avant de continuer. Données potentiellement irréversibles : volumes, configs, bibliothèque média.'}})); }\" 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const p = process.env.TOOL_INPUT_FILE_PATH || ''; const isCompose = /docker-compose\\.ya?ml$/.test(p); const isEnv = /\\.env(\\..*)?$/.test(p) && !p.includes('.env.example'); if (isCompose || isEnv) { console.log(JSON.stringify({hookSpecificOutput:{additionalContext:'⚙️ Fichier infra arr-stack modifié — invoquer arr-config-audit avant docker compose up. Vérifier : ports, volumes, restart policy, variables d\\'environnement manquantes dans .env.'}})); }\" 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}
