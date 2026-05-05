@@ -17,20 +17,11 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "Edit|Write|MultiEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "node -e \"let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const i=JSON.parse(d);const p=i.tool_input&&i.tool_input.file_path||'';const isCompose=/docker-compose\\.ya?ml$/.test(p);const isEnv=/\\.env(\\..*)?\$/.test(p)&&!p.includes('.env.example');const isVpn=/[/]vpn[/]|vpn\\.(conf|ovpn|key|crt|yml)\$|wireguard|openvpn/i.test(p);if(isCompose){process.stdout.write(JSON.stringify({hookSpecificOutput:{hookEventName:'PostToolUse',additionalContext:'\\u2699\\ufe0f docker-compose modifi\\u00e9 \\u2014 invoquer arr-docker-validator + arr-compose-builder avant docker compose up'}}));}else if(isVpn){process.stdout.write(JSON.stringify({hookSpecificOutput:{hookEventName:'PostToolUse',additionalContext:'\\ud83d\\udd12 Config VPN modifi\\u00e9e \\u2014 invoquer arr-vpn-checker'}}));}else if(isEnv){process.stdout.write(JSON.stringify({hookSpecificOutput:{hookEventName:'PostToolUse',additionalContext:'\\u2699\\ufe0f Fichier .env modifi\\u00e9 \\u2014 invoquer arr-docker-validator pour v\\u00e9rifier les variables requises'}}));}}catch(e){}});\" 2>>~/.claude/hooks-arrstack.log || true"
-          }
-        ]
-      },
-      {
-        "matcher": "MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node -e \"let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const i=JSON.parse(d);const p=i.tool_input&&i.tool_input.file_path||'';const isCompose=/docker-compose\\.ya?ml$/.test(p);const isEnv=/\\.env(\\..*)?\$/.test(p)&&!p.includes('.env.example');const isVpn=/[/]vpn[/]|vpn\\.(conf|ovpn|key|crt|yml)\$|wireguard|openvpn/i.test(p);if(isCompose){process.stdout.write(JSON.stringify({hookSpecificOutput:{hookEventName:'PostToolUse',additionalContext:'\\u2699\\ufe0f docker-compose modifi\\u00e9 \\u2014 invoquer arr-docker-validator + arr-compose-builder avant docker compose up'}}));}else if(isVpn){process.stdout.write(JSON.stringify({hookSpecificOutput:{hookEventName:'PostToolUse',additionalContext:'\\ud83d\\udd12 Config VPN modifi\\u00e9e \\u2014 invoquer arr-vpn-checker'}}));}else if(isEnv){process.stdout.write(JSON.stringify({hookSpecificOutput:{hookEventName:'PostToolUse',additionalContext:'\\u2699\\ufe0f Fichier .env modifi\\u00e9 \\u2014 invoquer arr-docker-validator pour v\\u00e9rifier les variables requises'}}));}}catch(e){}});\" 2>>~/.claude/hooks-arrstack.log || true"
+            "command": "node .claude/hooks/post-edit.mjs 2>>~/.claude/hooks-arrstack.log || true"
           }
         ]
       }
