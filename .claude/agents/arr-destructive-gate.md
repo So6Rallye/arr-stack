@@ -1,6 +1,6 @@
 ---
 name: arr-destructive-gate
-description: Use before ANY destructive operation on arr-stack — rm -rf, docker volume prune, docker system prune, container deletion, or data directory removal. Gate Opus qui confirme avant toute suppression irréversible.
+description: Use before any rm -rf on data volumes, docker volume prune, docker volume rm, docker system prune, or container deletion targeting arr-stack volumes. Reads docker volume ls and checks for irreversible data loss. Returns GO|ABORT with volume inventory and risk assessment.
 model: opus
 isolation: true
 tools:

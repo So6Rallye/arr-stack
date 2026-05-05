@@ -1,6 +1,6 @@
 ---
 name: arr-vpn-checker
-description: Use when diagnosing VPN connectivity issues in arr-stack, checking if the VPN container is routing traffic correctly, or verifying that arr services are behind VPN. Vérifie l'état du VPN et le routage des conteneurs.
+description: Use after editing docker-compose.yml lines containing network_mode or the VPN service definition. Checks VPN container logs and routing with docker exec ip route. Returns STATUS: VPN_OK|VPN_DOWN with routing table excerpt.
 model: haiku
 isolation: true
 tools:

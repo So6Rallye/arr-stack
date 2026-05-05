@@ -1,6 +1,6 @@
 ---
 name: arr-docker-validator
-description: Use when validating arr-stack Docker containers status, checking service health, or diagnosing container issues. Vérifie l'état des conteneurs Docker de l'arr-stack.
+description: Use after editing docker-compose.yml or any service config file. Runs docker compose ps and health checks. Returns STATUS: HEALTHY|DEGRADED with container states, exit codes, and restart counts.
 model: haiku
 isolation: true
 tools:
