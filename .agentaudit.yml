@@ -1,0 +1,61 @@
+# .agentaudit.yml — arr-stack
+# Déclaration des buckets pour l'audit de cohérence rule surface / project state.
+# Lu par .github/audit-prompt.md au démarrage de chaque run CI.
+#
+# IMPORTANT : ne lister que des fichiers trackés par git.
+# .claude/ .brain/ AGENTS.md sont locaux (non trackés) → exclus de l'audit CI.
+# Branche de travail : main (exception workspace — pas de staging sur ce repo).
+
+schema_version: 1
+project: arr-stack
+repo: So6Rallye/arr-stack
+
+buckets:
+  always_loaded:
+    description: "Fichier racine chargé automatiquement par Claude Code à chaque session"
+    files:
+      - CLAUDE.md
+
+  rules_docs:
+    description: "Documentation opérationnelle trackée dans git — procédures et architecture"
+    files:
+      - architecture-diagram.md
+      - maintenance-schedule.md
+      - restore-guide.md
+      - backup-guide.md
+      - diagnostics.md
+      - network-guide.md
+
+  project_state:
+    description: "Fichiers de suivi, roadmap et planification"
+    files:
+      - PLAN_DEPLOIEMENT.md
+      - FONCTIONNALITES.md
+      - REALISE.md
+      - JOURNAL.md
+      - TODO_SESSION.md
+
+  ci_infra:
+    description: "Infrastructure CI audit — cohérence de l'audit lui-même"
+    files:
+      - .agentaudit.yml
+      - .github/audit-prompt.md
+      - .github/workflows/agent-audit.yml
+      - .github/scripts/sync-findings-to-dashboard.mjs
+
+exclude:
+  # Fichiers opérationnels hors périmètre audit (coût tokens)
+  - "**/*.yml"
+  - "**/*.yaml"
+  - "**/*.json"
+  - "**/*.sh"
+  - "**/*.conf"
+  - "**/*.env"
+  - ".git/**"
+  - "three-brain-out/**"
+  - "INFOS-DEV/**"
+  - "data/**"
+  - "docs/superpowers/**"
+  # Fichiers locaux non trackés — jamais présents en CI
+  - ".claude/**"
+  - ".brain/**"

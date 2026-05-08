@@ -1,0 +1,84 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Agent rule audit
+
+"on":
+  pull_request:
+    branches: [main]
+    paths:
+      - 'CLAUDE.md'
+      - 'AGENTS.md'
+      - '.claude/**'
+      - '.brain/**'
+      - 'JOURNAL.md'
+      - 'PLAN_DEPLOIEMENT.md'
+      - 'FONCTIONNALITES.md'
+      - 'REALISE.md'
+      - 'TODO_SESSION.md'
+      - 'architecture-diagram.md'
+      - 'maintenance-schedule.md'
+      - 'restore-guide.md'
+      - 'backup-guide.md'
+      - '.agentaudit.yml'
+  schedule:
+    - cron: '0 20 * * 0'  # Dimanche 20:00 UTC
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code@latest
+
+      - name: Run Claude Code audit
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          set -o pipefail
+          claude -p "$(cat .github/audit-prompt.md)" \
+            --output-format text \
+            --max-turns 30 \
+            --dangerously-skip-permissions \
+            2>&1 | tee audit-report.md
+
+      - name: Sync findings to dashboard
+        if: always() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.DASHBOARD_REPO_TOKEN }}
+          DASHBOARD_REPO_TOKEN: ${{ secrets.DASHBOARD_REPO_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: node .github/scripts/sync-findings-to-dashboard.mjs audit-report.md
+
+      - name: Post report on PR
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          path: audit-report.md
+          header: agent-audit
+
+      - name: Open issue on scheduled run
+        if: github.event_name == 'schedule'
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: "Weekly agent audit — ${{ github.run_id }}"
+          content-filepath: audit-report.md
+          labels: audit,automated
+
+      - name: Fail on P0 findings
+        if: github.event_name == 'pull_request'
+        run: |
+          if grep -qP "^## P0 findings \([1-9]" audit-report.md; then
+            echo "::error::P0 findings detected — merge blocked. Review the agent-audit comment."
+            exit 1
+          fi
