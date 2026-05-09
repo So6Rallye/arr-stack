@@ -43,12 +43,12 @@ jobs:
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
-          set -o pipefail
           claude -p "$(cat .github/audit-prompt.md)" \
             --output-format text \
             --max-turns 30 \
             --dangerously-skip-permissions \
-            2>&1 | tee audit-report.md
+            2>&1 | tee audit-report.md \
+            || echo "::warning::claude exited non-zero — quota or max-turns reached, partial output synced"
 
       - name: Sync findings to dashboard
         if: always() && github.event_name != 'pull_request'
