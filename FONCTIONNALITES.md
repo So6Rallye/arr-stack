@@ -32,7 +32,7 @@
 | Backup /docker/appdata | Planifié | Script `backup-arr-stack.sh` (rsync) — niveau applicatif |
 | Backup /data/personal | Planifié | Inclus dans backup script |
 | Photos famille (/data/photos) | Planifié | Dossiers library/ + upload/ — Immich |
-| Guide agrandissement disque virtio | Disponible | Guide `proxmox-storage-guide.md` |
+| Guide agrandissement disque virtio | Disponible | Guide `docs/proxmox-storage-guide.md` |
 
 ---
 

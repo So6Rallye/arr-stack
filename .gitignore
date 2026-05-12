@@ -8,3 +8,7 @@ CREDENTIALS.md
 
 # Claude Code — état de compaction (éphémère, local uniquement)
 .claude/state/
+.claude/settings.local.json
+
+# Three-Brain — sortie locale (logs + cache quota)
+three-brain-out/

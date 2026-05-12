@@ -1,7 +1,7 @@
 # TODO_SESSION.md — ARR Stack
 
 > Convention : ce fichier ne contient QUE des tâches non terminées [ ].
-> Dernière mise à jour : 2026-04-17
+> Dernière mise à jour : 2026-04-19
 
 ---
 

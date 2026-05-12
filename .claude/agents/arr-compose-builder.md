@@ -1,6 +1,6 @@
 ---
 name: arr-compose-builder
-description: Use after editing docker-compose.yml to add or modify a service definition. Runs docker compose config --quiet to validate the file, checks port conflicts and volume mounts. Returns STATUS: VALID|ERRORS with line references and fix recommendations.
+description: "Use after editing docker-compose.yml to add or modify a service definition. Runs docker compose config --quiet to validate the file, checks port conflicts and volume mounts. Returns STATUS: VALID|ERRORS with line references and fix recommendations."
 model: haiku
 isolation: true
 tools:

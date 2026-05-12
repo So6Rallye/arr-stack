@@ -1,6 +1,6 @@
 ---
 name: arr-docker-validator
-description: Use after editing docker-compose.yml or any service config file. Runs docker compose ps and health checks. Returns STATUS: HEALTHY|DEGRADED with container states, exit codes, and restart counts.
+description: "Use after editing docker-compose.yml or any service config file. Runs docker compose ps and health checks. Returns STATUS: HEALTHY|DEGRADED with container states, exit codes, and restart counts."
 model: haiku
 isolation: true
 tools:

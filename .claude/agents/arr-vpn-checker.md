@@ -1,6 +1,6 @@
 ---
 name: arr-vpn-checker
-description: Use after editing docker-compose.yml lines containing network_mode or the VPN service definition. Checks VPN container logs and routing with docker exec ip route. Returns STATUS: VPN_OK|VPN_DOWN with routing table excerpt.
+description: "Use after editing docker-compose.yml lines containing network_mode or the VPN service definition. Checks VPN container logs and routing with docker exec ip route. Returns STATUS: VPN_OK|VPN_DOWN with routing table excerpt."
 model: haiku
 isolation: true
 tools:

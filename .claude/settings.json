@@ -10,7 +10,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node -e \"let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const i=JSON.parse(d);const cmd=i.tool_input&&i.tool_input.command||'';const isD=/rm\\s+-rf|docker\\s+volume\\s+(prune|rm)|docker\\s+system\\s+prune|docker[- ]compose\\s+down\\s+-v|rsync\\s+--delete|dd\\s+if=|mkfs/.test(cmd);const isC=/docker-compose|docker\\s+compose/.test(cmd);const isV=/wireguard|wg-quick|openvpn|vpn\\.conf|vpn\\.sh/i.test(cmd);if(isD){process.stdout.write(JSON.stringify({hookSpecificOutput:{hookEventName:'PreToolUse',additionalContext:'\\u26a0\\ufe0f Commande destructive d\\u00e9tect\\u00e9e \\u2014 invoquer arr-destructive-gate avant ex\\u00e9cution'}}));}else if(isC){process.stdout.write(JSON.stringify({hookSpecificOutput:{hookEventName:'PreToolUse',additionalContext:'\\u2699\\ufe0f Commande docker-compose \\u2014 invoquer arr-docker-validator + arr-compose-builder'}}));}else if(isV){process.stdout.write(JSON.stringify({hookSpecificOutput:{hookEventName:'PreToolUse',additionalContext:'\\ud83d\\udd12 Commande VPN \\u2014 invoquer arr-vpn-checker'}}));}}catch(e){}});\" 2>>~/.claude/hooks-arrstack.log || true"
+            "command": "HOOK_DIR=\"$(cygpath -w \"$CLAUDE_PROJECT_DIR\" 2>/dev/null || echo \"$CLAUDE_PROJECT_DIR\")\" && node \"$HOOK_DIR\\.claude\\hooks\\pre-tool-use.mjs\" 2>>~/.claude/hooks-arrstack.log || true"
           }
         ]
       }
@@ -21,7 +21,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/hooks/post-edit.mjs 2>>~/.claude/hooks-arrstack.log || true"
+            "command": "HOOK_DIR=\"$(cygpath -w \"$CLAUDE_PROJECT_DIR\" 2>/dev/null || echo \"$CLAUDE_PROJECT_DIR\")\" && node \"$HOOK_DIR\\.claude\\hooks\\post-edit.mjs\" 2>>~/.claude/hooks-arrstack.log || true"
           }
         ]
       }

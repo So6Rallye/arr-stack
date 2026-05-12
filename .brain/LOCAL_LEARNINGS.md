@@ -38,3 +38,16 @@ Immich nécessite une image PostgreSQL custom avec `pgvecto-rs` (extension vecto
 Ne pas intégrer dans `docker-compose.yml` principal — stack Docker Compose séparée (`immich/docker-compose.yml`).
 Raison : l'image PostgreSQL custom d'Immich est incompatible avec les autres services qui utilisent PostgreSQL standard.
 (arr-stack, 2026-04-24)
+
+---
+
+## Hooks externalisés + strict-wording slug [arr-stack] [validé]
+
+PreToolUse Bash et PostToolUse Edit|Write|MultiEdit dans `.claude/hooks/{pre-tool-use,post-edit}.mjs`. Le `settings.json` ne fait plus que pointer via cygpath : `HOOK_DIR="$(cygpath -w "$CLAUDE_PROJECT_DIR")" && node "$HOOK_DIR\.claude\hooks\<file>.mjs"`. Pourquoi : un `node -e "…"` inline avec regex contenant `\\` se fait double-unescape (JSON + bash) et crashe silencieusement.
+
+Chaque nudge utilise `strictNudge(slugs, role, focus)` qui répète littéralement le slug entre guillemets numérotés et exige `Agent({ subagent_type: "<slug-littéral>", ... })` avec triple négation ("Pas general-purpose. Pas une paraphrase. Pas une description seule.") + clause de refus si le slug est introuvable. Sans cela, Claude paraphrase via general-purpose et le dashboard reader ne voit jamais l'invocation des sub-agents projet.
+
+Ordering critique : VPN config (`wireguard|openvpn|vpn.*`) **avant** docker-compose, sinon `docker-compose.vpn.yml` est mal routé. Régex destructive `rsync\b[^|;&]*--delete` (pas `rsync\s+--delete`) pour matcher les flags intermédiaires (`rsync -a --delete`).
+
+Test E2E reproductible : `DASHBOARD/scripts/__test-arrstack-hooks.mjs` — 30/30 PASS sous Git Bash + Windows Node (spawnSync avec CLAUDE_PROJECT_DIR Unix + cwd Windows).
+(arr-stack, 2026-05-07)
