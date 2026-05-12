@@ -71,3 +71,18 @@
 | Guide diagnostic | Disponible | `diagnostics.md` |
 | Guide restauration | Disponible | `restore-guide.md` |
 | Guide maintenance | Disponible | `maintenance-schedule.md` |
+
+---
+
+## CI & Agents Claude Code
+
+| Fonctionnalité | Statut | Notes |
+|---|---|---|
+| Hook PreToolUse destructif (gate) | Disponible | `.claude/hooks/pre-tool-use.mjs` — bloque `rm -rf`, `docker volume prune`, `rsync --delete`, force `arr-destructive-gate` |
+| Hook PostToolUse docker-compose/.env | Disponible | `.claude/hooks/post-edit.mjs` — strict-wording slugs littéraux → `arr-docker-validator` + `arr-compose-builder` ou `arr-vpn-checker` |
+| Subagent `arr-destructive-gate` | Disponible | Haiku — confirmation avant opération irréversible, vérifie hostnamectl |
+| Subagent `arr-docker-validator` | Disponible | Haiku — health checks conteneurs, exit codes, restart counts |
+| Subagent `arr-compose-builder` | Disponible | Haiku — validation docker-compose.yml (ports, volumes, hardlinks) |
+| Subagent `arr-vpn-checker` | Disponible | Haiku — kill switch, DNS leak, qBittorrent bind VPN interface |
+| CI audit GitHub Actions | Disponible | `.github/workflows/agent-audit.yml` — trigger PR→main + cron dim. 20h UTC |
+| Sync findings dashboard | Disponible | `.github/scripts/sync-findings-to-dashboard.mjs` → So6Rallye/e-motion-dashboard |
