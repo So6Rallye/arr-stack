@@ -6,7 +6,7 @@ Use this guide if the host fails and you need to rebuild quickly.
 
 ## Restore priority order
 
-1. Install Debian or Ubuntu
+1. Install Debian 12 (Bookworm)
 2. Install Docker and Compose
 3. Restore project files (`docker-compose.yml`, `.env`)
 4. Restore `/docker/appdata`
